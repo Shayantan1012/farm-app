@@ -17,7 +17,7 @@ import * as ImagePicker from "expo-image-picker";
 import { products as seed, Product, Order, stages } from "./src/data";
 import { s } from "./src/styles/appStyles";
 import { green, ink, muted } from "./src/theme/colors";
-import { Icon , IconName } from "./src/components/Icon";
+import { Icon, IconName } from "./src/components/Icon";
 import { Button } from "./src/components/Button";
 import { Field } from "./src/components/Field";
 import { Chips } from "./src/components/Chips";
