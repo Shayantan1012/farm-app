@@ -29,7 +29,9 @@ Demo OTP: 123456. Coupon: FRESH10 (10%). Delivery: ₹35, free at ₹499, or fre
 
 ## Frontend boundary
 
-This is a functional prototype, not an implementation of every one of the PDF's 141 requirements. Authentication, payments, verification, communication, refunds and deliveries are simulated. No backend, secrets, payment gateway or external messaging is implemented. Role switching is a demonstration feature, not an authorization boundary.
+These screens are a functional prototype, not an implementation of every one of the PDF's 141 requirements. Authentication, payments, verification, communication, refunds and deliveries in the screens are simulated. Role switching is a demonstration feature, not an authorization boundary.
+
+A separate Node.js/Express/MongoDB backend is now available in ../farm-backend. See its README.md for setup and docs/API.md for endpoints. The typed client in src/services/api.ts supports it, but the current screens still use local demo state until their flows are connected to that client.
 
 Products, basket, favourites, orders, tickets, name and address persist locally using AsyncStorage. Other preferences, conversations, reviews and moderation state last for the current session. Images use remote Unsplash URLs; uploaded image references are local previews.
 
