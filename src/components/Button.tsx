@@ -7,16 +7,20 @@ export function Button({
   label,
   onPress,
   secondary = false,
+  disabled = false,
 }: {
   label: string;
   onPress: () => void;
   secondary?: boolean;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={[s.button, secondary && s.secondary]}
+      disabled={disabled}
+      accessibilityState={{ disabled }}
+      style={[s.button, secondary && s.secondary, disabled && { opacity: 0.5 }]}
     >
       <Text style={[s.buttonText, secondary && { color: green }]}>{label}</Text>
     </Pressable>

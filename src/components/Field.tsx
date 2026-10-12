@@ -7,11 +7,13 @@ export function Field({
   value,
   onChange,
   numeric = false,
+  secure = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   numeric?: boolean;
+  secure?: boolean;
 }) {
   return (
     <View style={{ gap: 7, marginBottom: 15 }}>
@@ -22,6 +24,10 @@ export function Field({
         value={value}
         onChangeText={onChange}
         keyboardType={numeric ? "numeric" : "default"}
+        secureTextEntry={secure}
+        autoCapitalize={
+          secure || label.toLowerCase().includes("email") ? "none" : "sentences"
+        }
       />
     </View>
   );
