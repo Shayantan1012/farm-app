@@ -1,6 +1,8 @@
 import React from "react";
-import { View, Text, TextInput } from "react-native";
+import { View, TextInput } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import { s } from "../styles/appStyles";
+import { useI18n } from "../i18n/I18n";
 
 export function Field({
   label,
@@ -17,11 +19,12 @@ export function Field({
   secure?: boolean;
   phone?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <View style={{ gap: 7, marginBottom: 15 }}>
       <Text style={s.label}>{label}</Text>
       <TextInput
-        accessibilityLabel={label}
+        accessibilityLabel={t(label)}
         style={s.input}
         value={value}
         onChangeText={onChange}

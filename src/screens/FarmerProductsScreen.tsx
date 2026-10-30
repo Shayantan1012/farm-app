@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import { api, ApiProduct, ApiUser } from "../services/api";
 import { ProductForm } from "./ProductForm";
 import { ProductPhoto } from "../components/ProductPhoto";
@@ -15,6 +16,7 @@ export function FarmerProductsScreen({
   onRefreshAccount: () => Promise<void>;
   onChanged: () => void;
 }) {
+  const today = new Date().toISOString().slice(0, 10);
   const [items, setItems] = useState<ApiProduct[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
@@ -115,7 +117,13 @@ export function FarmerProductsScreen({
               ₹{p.price} / kg · {p.stock} kg available
             </Text>
             <Text style={s.badge}>
-              {!p.active ? "Paused" : p.stock === 0 ? "Out of stock" : "Active"}
+              {!p.active
+                ? "Paused"
+                : p.stock === 0
+                  ? "Out of stock"
+                  : p.expiry && p.expiry < today
+                    ? `Expired on ${p.expiry} — edit or remove the expiry date`
+                    : "Active on marketplace"}
             </Text>
             {deleting === p.id ? (
               <>

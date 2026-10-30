@@ -9,6 +9,7 @@ export const API_URL =
 
 export type Point = { latitude: number; longitude: number };
 export type ApiRole = "consumer" | "producer" | "delivery" | "administrator";
+export type ApiLanguage = "en" | "bn" | "hi" | "as" | "or" | "ne" | "ta" | "te";
 export type ApiUser = {
   id: string;
   name: string;
@@ -24,7 +25,7 @@ export type ApiUser = {
   state?: string;
   postalCode?: string;
   phone: string;
-  language: "en" | "bn" | "hi";
+  language: ApiLanguage;
   notifications: boolean;
   favorites: string[];
 };
@@ -151,6 +152,7 @@ export function createApiClient(baseUrl = API_URL) {
       city?: string;
       state?: string;
       postalCode?: string;
+      language?: ApiLanguage;
       phone?: string;
       name: string;
       email: string;

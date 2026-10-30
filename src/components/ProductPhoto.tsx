@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, StyleProp, ViewStyle } from "react-native";
+import { View, Image, StyleProp, ViewStyle } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import { Icon } from "./Icon";
 import { imageUrl } from "../services/api";
 import { s } from "../styles/appStyles";

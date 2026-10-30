@@ -1,7 +1,8 @@
 import { LocationPicker } from "../components/maps/LocationPicker";
 import { Point } from "../components/maps/types";
 import React, { useRef, useState } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import * as ImagePicker from "expo-image-picker";
 import { api, ApiProduct, ProductInput } from "../services/api";
 import { Field } from "../components/Field";
@@ -75,6 +76,7 @@ export function ProductForm({
       /^\d{4}-\d{2}-\d{2}$/.test(v) &&
       !Number.isNaN(Date.parse(v)) &&
       new Date(v).toISOString().slice(0, 10) === v;
+    const today = new Date().toISOString().slice(0, 10);
     if (
       name.trim().length < 2 ||
       location.trim().length < 2 ||
@@ -85,10 +87,10 @@ export function ProductForm({
       !/^\d+$/.test(minimum) ||
       Number(minimum) < 1 ||
       !validDate(harvest) ||
-      (expiry && (!validDate(expiry) || expiry < harvest))
+      (expiry && (!validDate(expiry) || expiry < harvest || expiry < today))
     ) {
       setError(
-        "Enter the product name, location, a positive price, whole-number stock and minimum quantity, and valid dates (YYYY-MM-DD).",
+        "Enter the product name, location, a positive price, whole-number stock and minimum quantity, and valid dates. Expiry cannot be earlier than today or harvest.",
       );
       return;
     }
@@ -184,10 +186,18 @@ export function ProductForm({
         onChange={setHarvest}
       />
       <Field
-        label="Expiry date (optional, YYYY-MM-DD)"
+        label="Expiry date (optional; today or later, YYYY-MM-DD)"
         value={expiry}
         onChange={setExpiry}
       />
+      {!!expiry && (
+        <Button
+          secondary
+          label="Clear expiry date"
+          disabled={busy}
+          onPress={() => setExpiry("")}
+        />
+      )}
       <Chips
         options={["Delivery & pickup", "Pickup only", "Delivery only"]}
         value={delivery}

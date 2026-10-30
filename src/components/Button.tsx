@@ -1,7 +1,9 @@
 import React from "react";
-import { Pressable, Text } from "react-native";
+import { Pressable } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import { green } from "../theme/colors";
 import { s } from "../styles/appStyles";
+import { useI18n } from "../i18n/I18n";
 
 export function Button({
   label,
@@ -14,9 +16,11 @@ export function Button({
   secondary?: boolean;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={t(label)}
       onPress={onPress}
       disabled={disabled}
       accessibilityState={{ disabled }}

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import { api, ApiUser } from "../services/api";
 import { Button } from "../components/Button";
 import { Feedback } from "../components/Feedback";

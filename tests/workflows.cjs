@@ -8,6 +8,7 @@ const { create, act } = require("react-test-renderer");
 global.IS_REACT_ACT_ENVIRONMENT = true;
 const cache = new Map();
 let photoBase64 = "";
+const localStore = new Map();
 let gpsCallback,
   appStateCallback,
   gpsRemoved = 0,
@@ -91,6 +92,14 @@ function load(file) {
   }).outputText;
   const req = (id) => {
     if (id === "react-native") return native;
+    if (id === "@react-native-async-storage/async-storage")
+      return {
+        __esModule: true,
+        default: {
+          getItem: async (key) => localStore.get(key) || null,
+          setItem: async (key, value) => localStore.set(key, value),
+        },
+      };
     if (id === "expo-location") return locationMock;
     if (id === "react-native-webview") return { WebView: "WebView" };
     if (id === "expo-status-bar") return { StatusBar: "StatusBar" };
@@ -215,6 +224,14 @@ const waitFor = async (predicate) => {
     0,
     "No hard-coded photo fallback",
   );
+  await click("English");
+  await click("Use this language");
+  assert.ok(text(app.root).includes("আপনার ভাষা বেছে নিন"));
+  assert.ok(text(app.root).includes("নির্বাচিত"));
+  assert.equal(localStore.get("harvest-language"), "bn");
+  await click("এই ভাষা ব্যবহার করুন");
+  assert.ok(text(app.root).includes("Choose your language"));
+  assert.equal(localStore.get("harvest-language"), "en");
   await click("Sign in / Register");
   await click("First administrator setup");
   await waitFor(() => Boolean(button("Create administrator")));
@@ -350,7 +367,7 @@ const waitFor = async (predicate) => {
   );
   assert.equal((await Product.findById(saved.id)).deleted, true);
   await click("Explore");
-  await waitFor(() => text(app.root).includes("No products listed yet."));
+  await waitFor(() => text(app.root).includes("No available products."));
   await act(async () => {
     await new Promise((r) => setTimeout(r, 100));
   });

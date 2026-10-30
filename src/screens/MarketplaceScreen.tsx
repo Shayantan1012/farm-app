@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Modal, ScrollView } from "react-native";
+import { View, Modal, ScrollView } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import { api, ApiProduct, ApiUser } from "../services/api";
 import { ProductCard } from "../components/ProductCard";
 import { ProductPhoto } from "../components/ProductPhoto";
@@ -198,7 +199,9 @@ export function MarketplaceScreen({
           !items.length
             ? savedOnly
               ? "No saved products yet."
-              : "No products listed yet. Farmers can sign in to add their harvest."
+              : user?.role === "producer"
+                ? "No available products. A listing is hidden when it is paused, out of stock, expired, or its farmer is not approved. Check My products for its status."
+                : "No products listed yet. Farmers can sign in to add their harvest."
             : undefined
         }
       />

@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { LocalizedText as Text } from "../../i18n/I18n";
 import { Button } from "../Button";
 export function Pagination({
   page,

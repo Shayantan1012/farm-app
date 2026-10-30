@@ -1,5 +1,6 @@
 import React from "react";
-import { Linking, Text, View } from "react-native";
+import { Linking, View } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import { ApiOrder, ApiUser } from "../services/api";
 import { useOrderTracking } from "../hooks/useOrderTracking";
 import { LocationMap } from "../components/maps/LocationMap";

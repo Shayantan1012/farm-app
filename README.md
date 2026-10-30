@@ -73,3 +73,9 @@ Older orders without coordinates display a missing-pin message instead of invent
 Setup shows a closed message if an administrator already exists, including one created earlier with the command-line script. No fresh setup account is needed in that case; sign in with the existing administrator.
 
 The workspace has separate components for setup, account creation, dashboard metrics, user management and record lists. Its pages cover users/contact details, farms and approvals, admin access, all products, orders, deliveries/maps, support tickets, reviews and audit history. Phone and address fields are stored with profiles; registration confirms matching passwords before sending the request.
+
+## App languages
+
+Open the language button beside **Sign in / Register**, or open **Account → Language** after signing in. Harvest supports English, Bengali, Hindi, Assamese, Odia, Nepali, Tamil and Telugu. Bengali and Hindi include the main registration, marketplace, product, basket, order, tracking and administration vocabulary. The other language packs cover navigation and common actions; untranslated new or detailed messages fall back to English so controls never disappear.
+
+The choice is stored on the device. Registration saves the chosen language with the new MongoDB account. Signing in loads that account's preference, and changing language while signed in updates `/api/users/me`. Internal filter and role values remain stable English API codes, so translating a label does not alter searches, permissions or saved data.

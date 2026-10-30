@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Platform, Text, View } from "react-native";
+import { Platform, View } from "react-native";
+import { LocalizedText as Text } from "../../i18n/I18n";
 import * as Location from "expo-location";
 import { LocationMap } from "./LocationMap";
 import { Point, validPoint } from "./types";

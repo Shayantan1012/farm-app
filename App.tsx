@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import {
   View,
-  Text,
   ScrollView,
   Pressable,
   useWindowDimensions,
 } from "react-native";
+import { LocalizedText as Text } from "./src/i18n/I18n";
 import { StatusBar } from "expo-status-bar";
 import { api, ApiUser, ApiProduct } from "./src/services/api";
 import { Icon, IconName } from "./src/components/Icon";
@@ -22,8 +22,16 @@ import { SupportScreen } from "./src/screens/SupportScreen";
 import { NotificationsScreen } from "./src/screens/NotificationsScreen";
 import { s } from "./src/styles/appStyles";
 import { green, muted } from "./src/theme/colors";
+import {
+  I18nProvider,
+  Language,
+  languages,
+  useI18n,
+} from "./src/i18n/I18n";
+import { LanguageScreen } from "./src/screens/LanguageScreen";
 
-export default function App() {
+function AppContent() {
+  const { language, setLanguage } = useI18n();
   const wide = useWindowDimensions().width >= 1000;
   const [user, setUser] = useState<ApiUser | null>(null),
     [page, setPage] = useState("Explore"),
@@ -33,6 +41,7 @@ export default function App() {
     setUser((await api.me()).user);
   };
   const authenticated = (u: ApiUser) => {
+    void setLanguage(u.language).catch(() => {});
     setUser(u);
     setNotice("");
     setPage(
@@ -87,6 +96,13 @@ export default function App() {
   const navigate = (p: string) => {
     setPage(p);
     setNotice("");
+  };
+  const changeLanguage = async (next: Language) => {
+    await setLanguage(next);
+    if (user) {
+      await api.request("/users/me", "PATCH", { language: next });
+      setUser({ ...user, language: next });
+    }
   };
   return (
     <View style={s.app}>
@@ -155,10 +171,20 @@ export default function App() {
               )}
             </View>
           ) : (
-            <Button
-              label="Sign in / Register"
-              onPress={() => navigate("Sign in")}
-            />
+            <View style={s.row}>
+              <Button
+                secondary
+                label={
+                  languages.find(({ code }) => code === language)?.nativeName ||
+                  "Language"
+                }
+                onPress={() => navigate("Language")}
+              />
+              <Button
+                label="Sign in / Register"
+                onPress={() => navigate("Sign in")}
+              />
+            </View>
           )}
         </View>
         <ScrollView
@@ -187,9 +213,13 @@ export default function App() {
             )}
             {page === "Sign in" && (
               <AuthScreen
+                language={language}
                 onAuthenticated={authenticated}
                 onAdminSetup={() => navigate("Admin setup")}
               />
+            )}
+            {page === "Language" && (
+              <LanguageScreen onChange={changeLanguage} />
             )}
             {page === "Admin setup" && !user && (
               <AdminSetupScreen onSignIn={() => navigate("Sign in")} />
@@ -222,6 +252,12 @@ export default function App() {
                   secondary
                   label="Saved products"
                   onPress={() => navigate("Saved")}
+                />
+                <View style={{ height: 12 }} />
+                <Button
+                  secondary
+                  label="Language"
+                  onPress={() => navigate("Language")}
                 />
                 <View style={{ height: 12 }} />
                 <Button
@@ -262,5 +298,13 @@ export default function App() {
         )}
       </View>
     </View>
+  );
+}
+
+export default function App() {
+  return (
+    <I18nProvider>
+      <AppContent />
+    </I18nProvider>
   );
 }

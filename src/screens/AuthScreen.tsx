@@ -1,17 +1,21 @@
 import React, { useState } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import { api, ApiUser, ApiRole } from "../services/api";
 import { Button } from "../components/Button";
 import { Field } from "../components/Field";
 import { Chips } from "../components/Chips";
 import { Feedback } from "../components/Feedback";
 import { s } from "../styles/appStyles";
+import { Language } from "../i18n/I18n";
 export function AuthScreen({
   onAuthenticated,
   onAdminSetup,
+  language,
 }: {
   onAuthenticated: (u: ApiUser) => void;
   onAdminSetup?: () => void;
+  language: Language;
 }) {
   const [mode, setMode] = useState("Sign in"),
     [email, setEmail] = useState(""),
@@ -77,6 +81,7 @@ export function AuthScreen({
           name,
           email: email.trim(),
           phone: contact,
+          language,
           address: address.trim(),
           city: city.trim(),
           state: state.trim(),

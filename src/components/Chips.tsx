@@ -1,6 +1,8 @@
 import React from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import { s } from "../styles/appStyles";
+import { useI18n } from "../i18n/I18n";
 
 export function Chips({
   options,
@@ -11,11 +13,13 @@ export function Chips({
   value: string;
   onChange: (v: string) => void;
 }) {
+  const { t } = useI18n();
   return (
     <View style={s.wrap}>
       {options.map((o) => (
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel={t(o)}
           accessibilityState={{ selected: o === value }}
           key={o}
           onPress={() => onChange(o)}

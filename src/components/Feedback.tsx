@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator } from "react-native";
+import { LocalizedText as Text } from "../i18n/I18n";
 import { Button } from "./Button";
 import { s } from "../styles/appStyles";
 export function Feedback({

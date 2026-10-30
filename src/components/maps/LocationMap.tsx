@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, Linking } from "react-native";
+import { View, Linking } from "react-native";
+import { LocalizedText as Text } from "../../i18n/I18n";
 import { WebView } from "react-native-webview";
 import { MAP_URL, MapProps, validPoint } from "./types";
 export function LocationMap({ markers, onSelect }: MapProps) {
