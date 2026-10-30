@@ -1,3 +1,13 @@
-export const green = "#275C3B",
+export const green = "#2F6B45",
+  greenDark = "#1E4D32",
+  leaf = "#78A85A",
+  sage = "#B9D8A8",
+  mint = "#EAF5E3",
+  mintLight = "#F6FBF2",
+  cream = "#FFFDF5",
+  harvest = "#E39A3B",
+  danger = "#A9433C",
+  dangerLight = "#FFF1EE",
+  border = "#D7E6CE",
   ink = "#20382B",
-  muted = "#7A847C";
+  muted = "#697A6D";

@@ -4,6 +4,7 @@ import { LocalizedText as Text, useI18n } from "../i18n/I18n";
 import { Button } from "./Button";
 import { DateFieldProps } from "./DateField.types";
 import { s } from "../styles/appStyles";
+import { border, ink } from "../theme/colors";
 
 export function DateField({
   label,
@@ -28,12 +29,12 @@ export function DateField({
         style={{
           width: "100%",
           boxSizing: "border-box",
-          border: "1px solid #dbe3d5",
+          border: `1px solid ${border}`,
           borderRadius: 10,
           padding: "14px 15px",
           minHeight: 50,
           fontSize: 16,
-          color: "#203b2c",
+          color: ink,
           background: "#fff",
         }}
       />

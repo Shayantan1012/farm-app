@@ -25,6 +25,9 @@ export type ApiUser = {
   state?: string;
   postalCode?: string;
   phone: string;
+  deliveryAvailable?: boolean;
+  deliveryLocation?: Point;
+  deliveryLocationUpdatedAt?: string;
   language: ApiLanguage;
   notifications: boolean;
   favorites: string[];
@@ -57,6 +60,11 @@ export type ApiOrder = {
   status: string;
   method: "delivery" | "pickup";
   address: string;
+  pickupAddress?: string;
+  pickupLocation?: Point;
+  destinationLocation?: Point;
+  assignedAt?: string;
+  assignmentDistanceKm?: number;
   slot: string;
   payment: "cod" | "pickup";
   paymentStatus: "due" | "collected" | "void";

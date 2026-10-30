@@ -3,6 +3,7 @@ import { View, ActivityIndicator } from "react-native";
 import { LocalizedText as Text } from "../i18n/I18n";
 import { Button } from "./Button";
 import { s } from "../styles/appStyles";
+import { danger, dangerLight, green } from "../theme/colors";
 export function Feedback({
   loading,
   error,
@@ -17,14 +18,20 @@ export function Feedback({
   if (loading)
     return (
       <View style={s.empty}>
-        <ActivityIndicator />
+        <ActivityIndicator color={green} />
         <Text style={s.muted}>Loading from the farm server…</Text>
       </View>
     );
   if (error)
     return (
-      <View accessibilityRole="alert" style={s.panel}>
-        <Text style={{ color: "#A1362D" }}>{error}</Text>
+      <View
+        accessibilityRole="alert"
+        style={[
+          s.panel,
+          { backgroundColor: dangerLight, borderColor: "#F0C9C3" },
+        ]}
+      >
+        <Text style={{ color: danger }}>{error}</Text>
         {onRetry && <Button label="Retry" onPress={onRetry} />}
       </View>
     );

@@ -4,6 +4,7 @@ import { LocalizedText as Text } from "../i18n/I18n";
 import { Icon } from "./Icon";
 import { imageUrl } from "../services/api";
 import { s } from "../styles/appStyles";
+import { mint } from "../theme/colors";
 export function ProductPhoto({
   image,
   style,
@@ -18,7 +19,7 @@ export function ProductPhoto({
       style={[
         {
           height: 175,
-          backgroundColor: "#EDF2E7",
+          backgroundColor: mint,
           overflow: "hidden",
           alignItems: "center",
           justifyContent: "center",

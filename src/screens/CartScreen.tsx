@@ -13,12 +13,19 @@ import { Feedback } from "../components/Feedback";
 import { ProductPhoto } from "../components/ProductPhoto";
 import { s } from "../styles/appStyles";
 export type CartLine = { product: ApiProduct | null; quantity: number };
+export const cartItemCount = (items: CartLine[]) =>
+  items.reduce(
+    (total, item) => total + Math.max(0, Number(item.quantity) || 0),
+    0,
+  );
 export function CartScreen({
   defaultAddress,
   onOrdered,
+  onCountChange,
 }: {
   defaultAddress: string;
   onOrdered: () => void;
+  onCountChange: (count: number) => void;
 }) {
   const [items, setItems] = useState<CartLine[]>([]),
     [loading, setLoading] = useState(true),
@@ -37,9 +44,9 @@ export function CartScreen({
     setLoading(true);
     setError("");
     try {
-      setItems(
-        (await api.request<{ items: CartLine[] }>("/users/me/cart")).items,
-      );
+      const result = await api.request<{ items: CartLine[] }>("/users/me/cart");
+      setItems(result.items);
+      onCountChange(cartItemCount(result.items));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -71,6 +78,7 @@ export function CartScreen({
         },
       );
       setItems(r.items);
+      onCountChange(cartItemCount(r.items));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -121,6 +129,7 @@ export function CartScreen({
       await api.checkout(input, attempt.current.key);
       setItems([]);
       await api.request("/users/me/cart", "PUT", { items: [] });
+      onCountChange(0);
       onOrdered();
     } catch (e) {
       setError((e as Error).message);

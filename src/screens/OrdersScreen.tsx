@@ -7,7 +7,18 @@ import { Button } from "../components/Button";
 import { Field } from "../components/Field";
 import { Feedback } from "../components/Feedback";
 import { s } from "../styles/appStyles";
+import { DeliveryDashboard } from "./DeliveryDashboard";
 export function OrdersScreen({
+  user,
+  deliveriesOnly = false,
+}: {
+  user: ApiUser;
+  deliveriesOnly?: boolean;
+}) {
+  if (user.role === "delivery") return <DeliveryDashboard user={user} />;
+  return <OrderList user={user} deliveriesOnly={deliveriesOnly} />;
+}
+function OrderList({
   user,
   deliveriesOnly = false,
 }: {

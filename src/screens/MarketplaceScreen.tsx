@@ -8,6 +8,7 @@ import { Field } from "../components/Field";
 import { Chips } from "../components/Chips";
 import { Button } from "../components/Button";
 import { Feedback } from "../components/Feedback";
+import { Icon } from "../components/Icon";
 import { s } from "../styles/appStyles";
 export function MarketplaceScreen({
   user,
@@ -129,24 +130,102 @@ export function MarketplaceScreen({
       /* Product details remain usable when reviews are unavailable. */
     }
   };
+  const visibleFarms = new Set(items.map((item) => item.farm)).size;
   return (
     <View style={{ gap: 18 }}>
       {!savedOnly && (
-        <View style={[s.hero, { minHeight: 220 }]}>
-          <View style={s.heroContent}>
-            <Text style={s.heroEyebrow}>DIRECT FROM THE GROWER</Text>
-            <Text style={[s.heroTitle, { fontSize: 34 }]}>
-              From their farm.{"\n"}To your table.
-            </Text>
-            <Text style={s.heroSub}>
-              Discover produce listed by farmers in your community.
-            </Text>
+        <>
+          <View style={s.hero}>
+            <View style={s.heroGlowLarge} />
+            <View style={s.heroGlowSmall} />
+            <View style={s.heroLayout}>
+              <View style={s.heroContent}>
+                <View style={s.heroEyebrowRow}>
+                  <Icon name="leaf" color="#2F6B45" size={16} />
+                  <Text style={s.heroEyebrow}>DIRECT FROM THE GROWER</Text>
+                </View>
+                <Text style={[s.heroTitle, { fontSize: 38 }]}>
+                  Better food starts{"\n"}closer to home.
+                </Text>
+                <Text style={s.heroSub}>
+                  Shop seasonal produce directly from verified local farmers,
+                  with clear harvest dates and flexible delivery.
+                </Text>
+                <View style={s.heroPillRow}>
+                  <View style={s.heroPill}>
+                    <Icon name="checkmark-circle" color="#E39A3B" size={16} />
+                    <Text style={s.heroPillText}>Verified farms</Text>
+                  </View>
+                  <View style={s.heroPill}>
+                    <Icon name="navigate" color="#E39A3B" size={16} />
+                    <Text style={s.heroPillText}>Track delivery</Text>
+                  </View>
+                </View>
+              </View>
+              <View style={s.heroVisual}>
+                <View style={s.heroArtCard}>
+                  <View style={s.heroSun} />
+                  <View style={s.heroArtIcon}>
+                    <Icon name="basket" size={42} />
+                  </View>
+                  <Text style={s.heroArtTitle}>Today&apos;s local harvest</Text>
+                  <Text style={s.heroArtText}>
+                    {loading
+                      ? "Checking fresh listings…"
+                      : `${total} products ready to explore`}
+                  </Text>
+                  <View style={s.heroFieldLine} />
+                  <View style={[s.heroFieldLine, { width: "68%" }]} />
+                </View>
+              </View>
+            </View>
           </View>
-        </View>
+          <View style={s.benefits}>
+            <View style={s.benefit}>
+              <View style={s.benefitIcon}>
+                <Icon name="leaf-outline" />
+              </View>
+              <View>
+                <Text style={s.label}>{total} fresh listings</Text>
+                <Text style={s.tiny}>Seasonal produce near you</Text>
+              </View>
+            </View>
+            <View style={s.benefit}>
+              <View style={s.benefitIcon}>
+                <Icon name="storefront-outline" />
+              </View>
+              <View>
+                <Text style={s.label}>{visibleFarms} farms visible</Text>
+                <Text style={s.tiny}>Buy directly from growers</Text>
+              </View>
+            </View>
+            <View style={s.benefit}>
+              <View style={s.benefitIcon}>
+                <Icon name="bicycle-outline" />
+              </View>
+              <View>
+                <Text style={s.label}>Delivery or pickup</Text>
+                <Text style={s.tiny}>Choose what works for you</Text>
+              </View>
+            </View>
+          </View>
+        </>
       )}
-      <Text style={s.heading}>
-        {savedOnly ? "Saved products" : "Fresh from our farmers"}
-      </Text>
+      <View style={s.marketplaceHeading}>
+        <View>
+          <Text style={s.heading}>
+            {savedOnly ? "Saved products" : "Fresh from our farmers"}
+          </Text>
+          {!savedOnly && (
+            <Text style={s.muted}>
+              Search and filter today&apos;s available harvest.
+            </Text>
+          )}
+        </View>
+        {!savedOnly && !loading && (
+          <Text style={s.marketplaceCount}>{total} AVAILABLE</Text>
+        )}
+      </View>
       {!savedOnly && (
         <>
           <Field

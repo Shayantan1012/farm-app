@@ -3,6 +3,7 @@ import {
   View,
   ScrollView,
   Pressable,
+  Image,
   useWindowDimensions,
 } from "react-native";
 import { LocalizedText as Text } from "./src/i18n/I18n";
@@ -13,7 +14,7 @@ import { Button } from "./src/components/Button";
 import { MarketplaceScreen } from "./src/screens/MarketplaceScreen";
 import { FarmerProductsScreen } from "./src/screens/FarmerProductsScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
-import { CartScreen, CartLine } from "./src/screens/CartScreen";
+import { CartScreen, CartLine, cartItemCount } from "./src/screens/CartScreen";
 import { OrdersScreen } from "./src/screens/OrdersScreen";
 import { AccountScreen } from "./src/screens/AccountScreen";
 import { AdminWorkspace } from "./src/screens/admin/AdminWorkspace";
@@ -22,12 +23,7 @@ import { SupportScreen } from "./src/screens/SupportScreen";
 import { NotificationsScreen } from "./src/screens/NotificationsScreen";
 import { s } from "./src/styles/appStyles";
 import { green, muted } from "./src/theme/colors";
-import {
-  I18nProvider,
-  Language,
-  languages,
-  useI18n,
-} from "./src/i18n/I18n";
+import { I18nProvider, Language, languages, useI18n } from "./src/i18n/I18n";
 import { LanguageScreen } from "./src/screens/LanguageScreen";
 
 function AppContent() {
@@ -36,7 +32,8 @@ function AppContent() {
   const [user, setUser] = useState<ApiUser | null>(null),
     [page, setPage] = useState("Explore"),
     [revision, setRevision] = useState(0),
-    [notice, setNotice] = useState("");
+    [notice, setNotice] = useState(""),
+    [basketCount, setBasketCount] = useState(0);
   const refreshUser = async () => {
     setUser((await api.me()).user);
   };
@@ -44,6 +41,14 @@ function AppContent() {
     void setLanguage(u.language).catch(() => {});
     setUser(u);
     setNotice("");
+    if (u.role === "consumer") {
+      void api
+        .request<{ items: CartLine[] }>("/users/me/cart")
+        .then(({ items }) => setBasketCount(cartItemCount(items)))
+        .catch(() => setBasketCount(0));
+    } else {
+      setBasketCount(0);
+    }
     setPage(
       u.role === "producer"
         ? "My products"
@@ -59,6 +64,7 @@ function AppContent() {
     } finally {
       setUser(null);
       setNotice("");
+      setBasketCount(0);
       setPage("Explore");
       setRevision((r) => r + 1);
     }
@@ -75,7 +81,12 @@ function AppContent() {
     const existing = items.find((l) => l.productId === p.id);
     if (existing) existing.quantity += 1;
     else items.push({ productId: p.id, quantity: p.minOrder });
-    await api.request("/users/me/cart", "PUT", { items });
+    const updated = await api.request<{ items: CartLine[] }>(
+      "/users/me/cart",
+      "PUT",
+      { items },
+    );
+    setBasketCount(cartItemCount(updated.items));
     setNotice(p.name + " added to your basket.");
   };
   const nav: { label: string; icon: IconName }[] = [
@@ -111,9 +122,16 @@ function AppContent() {
         <View style={s.sidebar}>
           <View style={s.brand}>
             <View style={s.logo}>
-              <Icon name="leaf" color="#fff" />
+              <Image
+                source={require("./assets/harvest-logo.png")}
+                style={s.logoImage}
+                resizeMode="contain"
+              />
             </View>
-            <Text style={s.brandText}>harvest.</Text>
+            <View>
+              <Text style={s.brandText}>harvest.</Text>
+              <Text style={s.brandSubtext}>LOCAL FARM MARKET</Text>
+            </View>
           </View>
           <Text style={s.sidebarCaption}>FRESH FROM YOUR COMMUNITY</Text>
           <View style={{ height: 32 }} />
@@ -153,9 +171,25 @@ function AppContent() {
       )}
       <View style={{ flex: 1 }}>
         <View style={[s.topbar, { paddingHorizontal: wide ? 34 : 16 }]}>
-          <Text style={[s.brandText, { fontSize: wide ? 22 : 25 }]}>
-            {wide ? user?.farmName || "Your farm marketplace" : "harvest."}
-          </Text>
+          <View style={s.headerBrand}>
+            <View style={s.headerLogo}>
+              <Image
+                source={require("./assets/harvest-logo.png")}
+                style={s.headerLogoImage}
+                resizeMode="contain"
+              />
+            </View>
+            <View>
+              <Text style={[s.brandText, { fontSize: wide ? 20 : 23 }]}>
+                {wide ? user?.farmName || "Harvest marketplace" : "harvest."}
+              </Text>
+              {wide && (
+                <Text style={s.headerCaption}>
+                  Fresh produce, closer to home
+                </Text>
+              )}
+            </View>
+          </View>
           <View style={{ flex: 1 }} />
           {user ? (
             <View style={s.row}>
@@ -163,11 +197,19 @@ function AppContent() {
                 accessibilityRole="button"
                 accessibilityLabel="Notifications"
                 onPress={() => navigate("Notifications")}
+                style={({ pressed }) => [
+                  s.notificationButton,
+                  pressed && { opacity: 0.65 },
+                ]}
               >
-                <Icon name="notifications-outline" />
+                <Icon name="notifications-outline" color={green} />
               </Pressable>
               {user.role === "consumer" && (
-                <Button label="Basket" onPress={() => navigate("Basket")} />
+                <Button
+                  label="Basket"
+                  badge={basketCount}
+                  onPress={() => navigate("Basket")}
+                />
               )}
             </View>
           ) : (
@@ -195,7 +237,7 @@ function AppContent() {
             <Pressable
               accessibilityRole="button"
               onPress={() => setNotice("")}
-              style={[s.panel, { backgroundColor: "#EDF4E6" }]}
+              style={[s.panel, { backgroundColor: "#E4F3DC" }]}
             >
               <Text style={s.label}>{notice}</Text>
             </Pressable>
@@ -234,7 +276,9 @@ function AppContent() {
             {page === "Basket" && user?.role === "consumer" && (
               <CartScreen
                 defaultAddress={user.address}
+                onCountChange={setBasketCount}
                 onOrdered={() => {
+                  setBasketCount(0);
                   setRevision((r) => r + 1);
                   navigate("Orders");
                 }}
