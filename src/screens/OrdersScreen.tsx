@@ -146,6 +146,14 @@ function OrderList({
               {o.driver || "Unassigned"}
             </Text>
           )}
+          {o.method === "delivery" && o.driver && (
+            <Text style={s.badge}>
+              Delivery partner assigned
+              {o.assignmentDistanceKm !== undefined
+                ? ` · ${o.assignmentDistanceKm.toFixed(1)} km from pickup when assigned`
+                : ""}
+            </Text>
+          )}
           <Button
             secondary
             label="Track on map"
@@ -213,6 +221,7 @@ function OrderList({
                   "Accepted",
                   "Preparing",
                   "Ready for Pickup",
+                  "Driver Assigned",
                 ].includes(o.status))) && (
               <Button
                 secondary
