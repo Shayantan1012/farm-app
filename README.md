@@ -46,9 +46,9 @@ Frontend integration tests render the real farmer screens and send real HTTP req
 ## Order maps and delivery tracking
 
 1. Farmer: add or edit a product and choose its **Farm pickup** pin. The app detects the current phone location and fills the farm address. Tap the map to adjust it or press **Detect my current location** to retry. Existing products need a pickup pin before they can be ordered.
-2. Consumer: choose **Home delivery** in the basket, enter the address and select the **Delivery destination** pin. Farm pickup orders only need the farm's pin.
+2. Consumer: choose **Home delivery** in the basket, enter the address and select the **Delivery destination** pin. Enter the recipient name, phone, and optional instructions. The app estimates the earliest 30-minute time from farm distance and nearby partner availability. **Farm pickup** uses a preparation window. Both use 09:00–19:00 IST slots within seven days; the server validates the selected slot again at checkout.
 3. Farmer: progress the order through Accepted, Preparing and Ready for Pickup.
-4. An approved delivery partner signs in, opens Deliveries and presses **Accept delivery**. The assigned partner can then see both endpoints.
+4. An approved delivery partner signs in, opens **Orders**, and goes online with current GPS. The server assigns an eligible partner when the order is ready; the assigned partner sees the current delivery and both endpoints.
 5. Any participant opens **Orders / Deliveries ? Track on map**. Green is pickup, blue is destination, orange is the delivery partner. The partner presses **Start sharing location** and allows foreground location permission.
 6. Consumers and farmers see the partner's latest position, timestamp and accuracy, refreshed every 10 seconds. **Navigate to pickup / destination** opens Google Maps directions.
 

@@ -244,10 +244,14 @@ export function DeliveryDashboard({ user }: { user: ApiUser }) {
             </Text>
           </View>
           {!!current.recipientName && (
-            <Text style={s.body}>Recipient: {current.recipientName} · {current.recipientPhone}</Text>
+            <Text style={s.body}>
+              Recipient: {current.recipientName} · {current.recipientPhone}
+            </Text>
           )}
           {!!current.deliveryInstructions && (
-            <Text style={s.body}>Instructions: {current.deliveryInstructions}</Text>
+            <Text style={s.body}>
+              Instructions: {current.deliveryInstructions}
+            </Text>
           )}
           <View style={s.wrap}>
             {current.status === "Driver Assigned" && (

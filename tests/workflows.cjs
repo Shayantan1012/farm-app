@@ -238,6 +238,63 @@ const waitFor = async (predicate) => {
     4,
     "Basket badge counts total item quantity",
   );
+  const { CheckoutTiming } = load(
+    path.join(__dirname, "../src/components/CheckoutTiming.tsx"),
+  );
+  const { localDateTimeValue } = load(
+    path.join(__dirname, "../src/components/DateField.types.ts"),
+  );
+  const suggested = new Date(Date.now() + 3 * 86400000);
+  suggested.setUTCHours(6, 30, 0, 0);
+  let selectedSlot = "";
+  await act(async () => {
+    app = create(
+      React.createElement(CheckoutTiming, {
+        method: "Farm pickup",
+        hasDestination: false,
+        quote: {
+          minimumSlot: suggested.toISOString(),
+          maximumSlot: new Date(Date.now() + 7 * 86400000).toISOString(),
+          distanceKm: 0,
+          availablePartners: 0,
+          method: "pickup",
+          serviceHours: "09:00–19:00 IST",
+        },
+        loading: false,
+        error: "",
+        slot: "",
+        onSlotChange: (value) => { selectedSlot = value; },
+      }),
+    );
+  });
+  assert.ok(text(app.root).includes("Farm pickup timing"));
+  await click("Use suggested time");
+  assert.equal(selectedSlot, localDateTimeValue(suggested));
+  await act(async () => app.unmount());
+  app = null;
+  const { StarRating } = load(
+    path.join(__dirname, "../src/components/StarRating.tsx"),
+  );
+  function RatingExample() {
+    const [rating, setRating] = React.useState(0);
+    return React.createElement(StarRating, {
+      label: "Rate Potato",
+      value: rating,
+      onChange: setRating,
+    });
+  }
+  await act(async () => {
+    app = create(React.createElement(RatingExample));
+  });
+  assert.ok(text(app.root).includes("Tap a star to rate this product"));
+  await click("4 stars");
+  assert.ok(text(app.root).includes("4 of 5 stars selected"));
+  assert.equal(button("4 stars").props.accessibilityState.selected, true);
+  assert.equal(button("5 stars").props.accessibilityState.selected, false);
+  await click("2 stars");
+  assert.ok(text(app.root).includes("2 of 5 stars selected"));
+  await act(async () => app.unmount());
+  app = null;
   const App = load(path.join(__dirname, "../App.tsx")).default;
   await act(async () => {
     app = create(React.createElement(App));

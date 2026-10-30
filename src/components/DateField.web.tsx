@@ -22,6 +22,7 @@ export function DateField({
       <input
         aria-label={t(label)}
         type={mode === "date" ? "date" : "datetime-local"}
+        step={mode === "datetime" ? 1800 : undefined}
         value={value}
         min={minimum}
         max={maximum}

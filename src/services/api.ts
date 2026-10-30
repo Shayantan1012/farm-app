@@ -99,6 +99,14 @@ export type CheckoutInput = {
   slot: string;
   coupon?: "" | "FRESH10";
 };
+export type SlotQuote = {
+  minimumSlot: string;
+  maximumSlot: string;
+  distanceKm: number;
+  availablePartners: number;
+  method: "delivery" | "pickup";
+  serviceHours: string;
+};
 export class ApiError extends Error {
   constructor(
     public status: number,

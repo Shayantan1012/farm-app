@@ -545,6 +545,25 @@ export const s = StyleSheet.create({
     marginVertical: 15,
     gap: 7,
   },
+  ratingRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  ratingStar: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 13,
+    borderWidth: 1,
+    borderColor: border,
+    backgroundColor: cream,
+  },
+  ratingStarSelected: {
+    backgroundColor: "#FFF6DF",
+    borderColor: "#E8C77C",
+  },
   toast: {
     position: "absolute",
     bottom: 90,

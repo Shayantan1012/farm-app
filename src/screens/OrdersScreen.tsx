@@ -6,6 +6,7 @@ import { api, ApiUser, ApiOrder } from "../services/api";
 import { Button } from "../components/Button";
 import { Field } from "../components/Field";
 import { Feedback } from "../components/Feedback";
+import { StarRating } from "../components/StarRating";
 import { s } from "../styles/appStyles";
 import { DeliveryDashboard } from "./DeliveryDashboard";
 export function OrdersScreen({
@@ -149,13 +150,13 @@ function OrderList({
           {o.method === "delivery" &&
             o.driver &&
             !["Delivered", "Cancelled"].includes(o.status) && (
-            <Text style={s.badge}>
-              Delivery partner assigned
-              {o.assignmentDistanceKm !== undefined
-                ? ` · ${o.assignmentDistanceKm.toFixed(1)} km from pickup when assigned`
-                : ""}
-            </Text>
-          )}
+              <Text style={s.badge}>
+                Delivery partner assigned
+                {o.assignmentDistanceKm !== undefined
+                  ? ` · ${o.assignmentDistanceKm.toFixed(1)} km from pickup when assigned`
+                  : ""}
+              </Text>
+            )}
           {!["Delivered", "Cancelled"].includes(o.status) && (
             <Button
               secondary
@@ -173,7 +174,9 @@ function OrderList({
           </Text>
           <Text style={s.body}>{o.address}</Text>
           {!!o.recipientName && (
-            <Text style={s.body}>Recipient: {o.recipientName} · {o.recipientPhone}</Text>
+            <Text style={s.body}>
+              Recipient: {o.recipientName} · {o.recipientPhone}
+            </Text>
           )}
           {!!o.deliveryInstructions && (
             <Text style={s.body}>Instructions: {o.deliveryInstructions}</Text>
@@ -335,24 +338,29 @@ function ReviewForm({
   run: (fn: () => Promise<unknown>) => void;
   busy: boolean;
 }) {
-  const [rating, setRating] = useState("");
+  const [rating, setRating] = useState(0);
   return (
-    <View>
-      <Field
-        label={"Rating 1–5 for " + name}
-        numeric
+    <View style={{ gap: 14 }}>
+      <StarRating
+        label={"Rate " + name}
         value={rating}
         onChange={setRating}
+        disabled={busy}
       />
+      {text.trim().length < 3 && (
+        <Text style={s.muted}>
+          Write a short review above to enable saving.
+        </Text>
+      )}
       <Button
         label={"Save review for " + name}
-        disabled={busy}
+        disabled={busy || rating === 0 || text.trim().length < 3}
         onPress={() =>
           run(() =>
             api.request("/reviews", "POST", {
               orderId,
               productId,
-              rating: Number(rating),
+              rating,
               text,
             }),
           )
