@@ -19,6 +19,7 @@ export function OrderTracking({
 }) {
   const { data, error, sharing, busy, start, stop } = useOrderTracking(
     order.id,
+    onClose,
   );
   const markers: Marker[] = [];
   if (data?.pickup) markers.push({ ...data.pickup, label: "Pickup" });

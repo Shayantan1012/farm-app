@@ -61,6 +61,9 @@ export type ApiOrder = {
   method: "delivery" | "pickup";
   address: string;
   pickupAddress?: string;
+  recipientName?: string;
+  recipientPhone?: string;
+  deliveryInstructions?: string;
   pickupLocation?: Point;
   destinationLocation?: Point;
   assignedAt?: string;
@@ -90,6 +93,9 @@ export type CheckoutInput = {
   method: "delivery" | "pickup";
   address?: string;
   destinationLocation?: Point;
+  recipientName: string;
+  recipientPhone: string;
+  deliveryInstructions: string;
   slot: string;
   coupon?: "" | "FRESH10";
 };

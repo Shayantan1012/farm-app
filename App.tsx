@@ -276,6 +276,8 @@ function AppContent() {
             {page === "Basket" && user?.role === "consumer" && (
               <CartScreen
                 defaultAddress={user.address}
+                defaultName={user.name}
+                defaultPhone={user.phone}
                 onCountChange={setBasketCount}
                 onOrdered={() => {
                   setBasketCount(0);

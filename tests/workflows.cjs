@@ -431,6 +431,7 @@ const waitFor = async (predicate) => {
     pickupLocation: { latitude: 22.57, longitude: 88.36 },
     destinationLocation: { latitude: 22.51, longitude: 88.35 },
   });
+  let trackingClosed = 0;
   const showTracking = async (email) => {
     if (app) await act(async () => app.unmount());
     await waitFor(
@@ -444,7 +445,9 @@ const waitFor = async (predicate) => {
         React.createElement(OrderTracking, {
           order: { id: tracked.id, driver: rider.id },
           user: login.user,
-          onClose() {},
+          onClose() {
+            trackingClosed++;
+          },
         }),
       );
     });
@@ -492,6 +495,9 @@ const waitFor = async (predicate) => {
   await showTracking("buyer@test.example");
   assert.equal(button("Start sharing location"), undefined);
   assert.ok(text(app.root).includes("Destination: Test destination"));
+  await Order.updateOne({ _id: tracked.id }, { $set: { status: "Delivered" } });
+  await act(async () => appStateCallback("active"));
+  await waitFor(() => trackingClosed === 1);
   await act(async () => app.unmount());
   api.setToken(null);
   await act(async () => {

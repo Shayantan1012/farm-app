@@ -243,6 +243,12 @@ export function DeliveryDashboard({ user }: { user: ApiUser }) {
               ₹{(current.totalPaise / 100).toFixed(2)}
             </Text>
           </View>
+          {!!current.recipientName && (
+            <Text style={s.body}>Recipient: {current.recipientName} · {current.recipientPhone}</Text>
+          )}
+          {!!current.deliveryInstructions && (
+            <Text style={s.body}>Instructions: {current.deliveryInstructions}</Text>
+          )}
           <View style={s.wrap}>
             {current.status === "Driver Assigned" && (
               <Button

@@ -146,7 +146,9 @@ function OrderList({
               {o.driver || "Unassigned"}
             </Text>
           )}
-          {o.method === "delivery" && o.driver && (
+          {o.method === "delivery" &&
+            o.driver &&
+            !["Delivered", "Cancelled"].includes(o.status) && (
             <Text style={s.badge}>
               Delivery partner assigned
               {o.assignmentDistanceKm !== undefined
@@ -154,11 +156,13 @@ function OrderList({
                 : ""}
             </Text>
           )}
-          <Button
-            secondary
-            label="Track on map"
-            onPress={() => setTracked(o)}
-          />
+          {!["Delivered", "Cancelled"].includes(o.status) && (
+            <Button
+              secondary
+              label="Track on map"
+              onPress={() => setTracked(o)}
+            />
+          )}
           {o.items.map((l) => (
             <Text key={l.product} style={s.body}>
               {l.name} × {l.quantity} kg · ₹{(l.pricePaise * l.quantity) / 100}
@@ -168,6 +172,12 @@ function OrderList({
             {o.method} · {new Date(o.slot).toLocaleString()}
           </Text>
           <Text style={s.body}>{o.address}</Text>
+          {!!o.recipientName && (
+            <Text style={s.body}>Recipient: {o.recipientName} · {o.recipientPhone}</Text>
+          )}
+          {!!o.deliveryInstructions && (
+            <Text style={s.body}>Instructions: {o.deliveryInstructions}</Text>
+          )}
           <Text style={s.price}>₹{(o.totalPaise / 100).toFixed(2)}</Text>
           <Text style={s.muted}>
             Produce ₹{o.subtotalPaise / 100} · Delivery ₹{o.deliveryPaise / 100}{" "}

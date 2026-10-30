@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import * as Location from "expo-location";
-import { api } from "../services/api";
+import { ApiError, api } from "../services/api";
 import { Point } from "../components/maps/types";
 export type Tracking = {
   orderId: string;
@@ -17,7 +17,7 @@ export type Tracking = {
   sharing: boolean;
   fresh: boolean;
 };
-export function useOrderTracking(orderId: string) {
+export function useOrderTracking(orderId: string, onEnded?: () => void) {
   const [data, setData] = useState<Tracking | null>(null),
     [error, setError] = useState("");
   const [loadError, setLoadError] = useState("");
@@ -32,6 +32,8 @@ export function useOrderTracking(orderId: string) {
     lastSent: 0,
     starting: false,
   });
+  const onEndedRef = useRef(onEnded);
+  onEndedRef.current = onEnded;
   const path = "/orders/" + orderId + "/tracking";
   const stop = async () => {
     const c = control.current;
@@ -74,6 +76,11 @@ export function useOrderTracking(orderId: string) {
         }
       } catch (e) {
         if (c.mounted) {
+          if (e instanceof ApiError && e.status === 410) {
+            void stop();
+            onEndedRef.current?.();
+            return;
+          }
           setLoadError((e as Error).message);
           setData((old) => (old ? { ...old, fresh: false } : null));
         }

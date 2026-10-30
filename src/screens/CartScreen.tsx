@@ -13,6 +13,14 @@ import { Feedback } from "../components/Feedback";
 import { ProductPhoto } from "../components/ProductPhoto";
 import { s } from "../styles/appStyles";
 export type CartLine = { product: ApiProduct | null; quantity: number };
+type SlotQuote = {
+  minimumSlot: string;
+  maximumSlot: string;
+  distanceKm: number;
+  availablePartners: number;
+  method: "delivery" | "pickup";
+  serviceHours: string;
+};
 export const cartItemCount = (items: CartLine[]) =>
   items.reduce(
     (total, item) => total + Math.max(0, Number(item.quantity) || 0),
@@ -20,10 +28,14 @@ export const cartItemCount = (items: CartLine[]) =>
   );
 export function CartScreen({
   defaultAddress,
+  defaultName,
+  defaultPhone,
   onOrdered,
   onCountChange,
 }: {
   defaultAddress: string;
+  defaultName: string;
+  defaultPhone: string;
   onOrdered: () => void;
   onCountChange: (count: number) => void;
 }) {
@@ -32,9 +44,15 @@ export function CartScreen({
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [address, setAddress] = useState(defaultAddress),
+    [recipientName, setRecipientName] = useState(defaultName),
+    [recipientPhone, setRecipientPhone] = useState(defaultPhone || ""),
+    [deliveryInstructions, setDeliveryInstructions] = useState(""),
     [method, setMethod] = useState("Home delivery"),
     [slot, setSlot] = useState(""),
-    [coupon, setCoupon] = useState("");
+    [coupon, setCoupon] = useState(""),
+    [quote, setQuote] = useState<SlotQuote | null>(null),
+    [quoteLoading, setQuoteLoading] = useState(false),
+    [quoteError, setQuoteError] = useState("");
   const [destinationLocation, setDestinationLocation] = useState<
     Point | undefined
   >();
@@ -56,6 +74,33 @@ export function CartScreen({
   useEffect(() => {
     void load();
   }, []);
+  const quoteItems = items
+    .filter((line) => line.product)
+    .map((line) => ({ productId: line.product!.id, quantity: line.quantity }));
+  const quoteKey = JSON.stringify({
+    items: quoteItems,
+    method: method === "Farm pickup" ? "pickup" : "delivery",
+    destinationLocation: method === "Home delivery" ? destinationLocation : undefined,
+  });
+  useEffect(() => {
+    setQuote(null);
+    setQuoteError("");
+    setSlot("");
+    if (!quoteItems.length || quoteItems.length !== items.length ||
+      (method === "Home delivery" && !destinationLocation)) {
+      setQuoteLoading(false);
+      return;
+    }
+    let current = true;
+    setQuoteLoading(true);
+    const timer = setTimeout(() => {
+      void api.request<SlotQuote>("/orders/slot-quote", "POST", JSON.parse(quoteKey))
+        .then((result) => { if (current) setQuote(result); })
+        .catch((reason) => { if (current) setQuoteError((reason as Error).message); })
+        .finally(() => { if (current) setQuoteLoading(false); });
+    }, 250);
+    return () => { current = false; clearTimeout(timer); };
+  }, [quoteKey]);
   const change = async (index: number, delta: number) => {
     if (busy) return;
     setBusy(true);
@@ -106,6 +151,15 @@ export function CartScreen({
       setError("Select the delivery destination map pin.");
       return;
     }
+    if (!quote || selectedTime < Date.parse(quote.minimumSlot)) {
+      setError("Select a time on or after the suggested earliest slot.");
+      return;
+    }
+    if (recipientName.trim().length < 2 ||
+      !/^\+?[0-9]{7,15}$/.test(recipientPhone.trim().replace(/[\s()-]/g, ""))) {
+      setError("Enter the recipient's name and a valid phone number (7–15 digits).");
+      return;
+    }
     const input: CheckoutInput = {
       items: items.map((l) => ({
         productId: l.product!.id,
@@ -113,6 +167,9 @@ export function CartScreen({
       })),
       method: method === "Farm pickup" ? "pickup" : "delivery",
       ...(method !== "Farm pickup" ? { address, destinationLocation } : {}),
+      recipientName: recipientName.trim(),
+      recipientPhone: recipientPhone.trim().replace(/[\s()-]/g, ""),
+      deliveryInstructions: deliveryInstructions.trim(),
       slot: new Date(slot).toISOString(),
       coupon: coupon.trim().toUpperCase() as CheckoutInput["coupon"],
     };
@@ -207,15 +264,44 @@ export function CartScreen({
                 onAddressChange={setAddress}
             />
           )}
+          <Field label="Recipient name" value={recipientName} onChange={setRecipientName} />
+          <Field label="Recipient phone number" value={recipientPhone} onChange={setRecipientPhone} phone />
+          <Field
+            label={method === "Home delivery" ? "Delivery instructions (optional)" : "Pickup instructions (optional)"}
+            value={deliveryInstructions}
+            onChange={setDeliveryInstructions}
+          />
+          {method === "Home delivery" && !destinationLocation && (
+            <Text style={s.muted}>Choose a destination pin to calculate delivery distance and available partners.</Text>
+          )}
+          {quoteLoading && <Text style={s.muted}>Calculating available times…</Text>}
+          {!!quoteError && <Text accessibilityRole="alert" style={s.body}>{quoteError}</Text>}
+          {quote && (
+            <View style={s.summary}>
+              <Text style={s.cardTitle}>
+                {method === "Farm pickup" ? "Farm pickup timing" : "Home delivery timing"}
+              </Text>
+              <Text style={s.body}>
+                Earliest available: {new Date(quote.minimumSlot).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST
+              </Text>
+              {method === "Home delivery" && (
+                <Text style={s.body}>
+                  Farm-to-home distance: about {quote.distanceKm.toFixed(1)} km · {quote.availablePartners} partner(s) currently available near the farm.
+                </Text>
+              )}
+              <Text style={s.muted}>
+                Choose a 30-minute slot between {quote.serviceHours}. Timing is an estimate; the farmer and partner confirm fulfilment after your order.
+              </Text>
+              <Button secondary label="Use earliest available time" onPress={() => setSlot(localDateTimeValue(new Date(quote.minimumSlot)))} />
+            </View>
+          )}
           <DateField
             label="Delivery / pickup date and time"
             value={slot}
             onChange={setSlot}
             mode="datetime"
-            minimum={localDateTimeValue(new Date())}
-            maximum={localDateTimeValue(
-              new Date(Date.now() + 7 * 86400000),
-            )}
+            minimum={quote ? localDateTimeValue(new Date(quote.minimumSlot)) : localDateTimeValue(new Date())}
+            maximum={localDateTimeValue(new Date(Date.now() + 7 * 86400000))}
           />
           <Field
             label="Coupon (optional)"
@@ -239,7 +325,7 @@ export function CartScreen({
           </Text>
           <Button
             label={busy ? "Placing order…" : "Place order"}
-            disabled={busy || loading}
+            disabled={busy || loading || quoteLoading || !quote}
             onPress={checkout}
           />
         </View>
