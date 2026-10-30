@@ -15,10 +15,14 @@ export type ApiUser = {
   email: string;
   role: ApiRole;
   verified: boolean;
+  deletionRequestedAt?: string;
   approved: boolean;
   active: boolean;
   farmName: string;
   address: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
   phone: string;
   language: "en" | "bn" | "hi";
   notifications: boolean;
@@ -143,6 +147,11 @@ export function createApiClient(baseUrl = API_URL) {
       return result;
     },
     register(input: {
+      address?: string;
+      city?: string;
+      state?: string;
+      postalCode?: string;
+      phone?: string;
       name: string;
       email: string;
       password: string;

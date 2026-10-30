@@ -16,7 +16,8 @@ import { AuthScreen } from "./src/screens/AuthScreen";
 import { CartScreen, CartLine } from "./src/screens/CartScreen";
 import { OrdersScreen } from "./src/screens/OrdersScreen";
 import { AccountScreen } from "./src/screens/AccountScreen";
-import { AdminScreen } from "./src/screens/AdminScreen";
+import { AdminWorkspace } from "./src/screens/admin/AdminWorkspace";
+import { AdminSetupScreen } from "./src/screens/admin/AdminSetupScreen";
 import { SupportScreen } from "./src/screens/SupportScreen";
 import { NotificationsScreen } from "./src/screens/NotificationsScreen";
 import { s } from "./src/styles/appStyles";
@@ -38,7 +39,7 @@ export default function App() {
       u.role === "producer"
         ? "My products"
         : u.role === "administrator"
-          ? "Users"
+          ? "Admin"
           : "Explore",
     );
   };
@@ -74,7 +75,7 @@ export default function App() {
       ? [{ label: "My products", icon: "grid-outline" as IconName }]
       : []),
     ...(user?.role === "administrator"
-      ? [{ label: "Users", icon: "people-outline" as IconName }]
+      ? [{ label: "Admin", icon: "people-outline" as IconName }]
       : []),
     ...(user
       ? [
@@ -185,7 +186,13 @@ export default function App() {
               />
             )}
             {page === "Sign in" && (
-              <AuthScreen onAuthenticated={authenticated} />
+              <AuthScreen
+                onAuthenticated={authenticated}
+                onAdminSetup={() => navigate("Admin setup")}
+              />
+            )}
+            {page === "Admin setup" && !user && (
+              <AdminSetupScreen onSignIn={() => navigate("Sign in")} />
             )}
             {page === "My products" && user?.role === "producer" && (
               <FarmerProductsScreen
@@ -224,8 +231,8 @@ export default function App() {
                 />
               </>
             )}
-            {page === "Users" && user?.role === "administrator" && (
-              <AdminScreen />
+            {page === "Admin" && user?.role === "administrator" && (
+              <AdminWorkspace user={user} />
             )}
             {page === "Support" && user && <SupportScreen user={user} />}
             {page === "Notifications" && user && <NotificationsScreen />}

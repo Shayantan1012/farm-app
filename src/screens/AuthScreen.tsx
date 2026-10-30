@@ -8,12 +8,20 @@ import { Feedback } from "../components/Feedback";
 import { s } from "../styles/appStyles";
 export function AuthScreen({
   onAuthenticated,
+  onAdminSetup,
 }: {
   onAuthenticated: (u: ApiUser) => void;
+  onAdminSetup?: () => void;
 }) {
   const [mode, setMode] = useState("Sign in"),
     [email, setEmail] = useState(""),
+    [phone, setPhone] = useState(""),
     [password, setPassword] = useState(""),
+    [confirmPassword, setConfirmPassword] = useState(""),
+    [address, setAddress] = useState(""),
+    [city, setCity] = useState(""),
+    [state, setState] = useState(""),
+    [postalCode, setPostalCode] = useState(""),
     [name, setName] = useState(""),
     [farmName, setFarmName] = useState(""),
     [role, setRole] = useState("Farmer");
@@ -43,6 +51,22 @@ export function AuthScreen({
       } else if (mode === "Sign in")
         onAuthenticated((await api.login(email.trim(), password)).user);
       else if (mode === "Register") {
+        if (!confirmPassword || password !== confirmPassword)
+          throw new Error(
+            "Passwords do not match. Re-enter your password in Confirm password.",
+          );
+        if (
+          postalCode.trim() &&
+          !/^[A-Za-z0-9][A-Za-z0-9 -]{1,11}$/.test(postalCode.trim())
+        )
+          throw new Error(
+            "Enter a valid postal code (2?12 letters or digits).",
+          );
+        const contact = phone.trim().replace(/[\s()-]/g, "");
+        if (contact && !/^\+?[0-9]{7,15}$/.test(contact))
+          throw new Error(
+            "Enter a valid phone number with 7–15 digits, optionally starting with + and a country code.",
+          );
         const apiRole: Exclude<ApiRole, "administrator"> =
           role === "Farmer"
             ? "producer"
@@ -52,6 +76,11 @@ export function AuthScreen({
         const r = await api.register({
           name,
           email: email.trim(),
+          phone: contact,
+          address: address.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          postalCode: postalCode.trim(),
           password,
           role: apiRole,
           ...(apiRole === "producer" ? { farmName } : {}),
@@ -141,11 +170,43 @@ export function AuthScreen({
             </>
           )}
           <Field label="Email address" value={email} onChange={setEmail} />
+          {mode === "Register" && (
+            <>
+              <Field
+                label="Phone number (optional)"
+                value={phone}
+                onChange={setPhone}
+                phone
+              />
+              <Text style={s.label}>Address details (optional)</Text>
+              <Field
+                label="Street / village address"
+                value={address}
+                onChange={setAddress}
+              />
+              <Field label="City / village" value={city} onChange={setCity} />
+              <Field label="State" value={state} onChange={setState} />
+              <Field
+                label="Postal / PIN code"
+                value={postalCode}
+                onChange={setPostalCode}
+              />
+            </>
+          )}
+          {mode === "Register" && <Text style={s.label}>Account security</Text>}
           {["Register", "Sign in"].includes(mode) && (
             <Field
               label="Password (at least 12 characters)"
               value={password}
               onChange={setPassword}
+              secure
+            />
+          )}
+          {mode === "Register" && (
+            <Field
+              label="Confirm password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
               secure
             />
           )}
@@ -166,6 +227,14 @@ export function AuthScreen({
         disabled={busy}
         onPress={submit}
       />
+      {onAdminSetup && (
+        <Button
+          secondary
+          label="First administrator setup"
+          disabled={busy}
+          onPress={onAdminSetup}
+        />
+      )}
       {mode === "Register" && role === "Farmer" && (
         <Text style={s.muted}>
           After email verification, an administrator must approve your farmer

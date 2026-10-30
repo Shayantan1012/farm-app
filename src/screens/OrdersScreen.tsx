@@ -6,7 +6,13 @@ import { Button } from "../components/Button";
 import { Field } from "../components/Field";
 import { Feedback } from "../components/Feedback";
 import { s } from "../styles/appStyles";
-export function OrdersScreen({ user }: { user: ApiUser }) {
+export function OrdersScreen({
+  user,
+  deliveriesOnly = false,
+}: {
+  user: ApiUser;
+  deliveriesOnly?: boolean;
+}) {
   const [tracked, setTracked] = useState<ApiOrder | null>(null);
   const [orders, setOrders] = useState<ApiOrder[]>([]),
     [jobs, setJobs] = useState<{ _id: string; farm: string; slot: string }[]>(
@@ -26,7 +32,7 @@ export function OrdersScreen({ user }: { user: ApiUser }) {
     setError("");
     try {
       const r = await api.request<{ orders: ApiOrder[]; total: number }>(
-        "/orders?page=" + page,
+        "/orders?page=" + page + (deliveriesOnly ? "&method=delivery" : ""),
       );
       setOrders(r.orders);
       setTotal(r.total);
@@ -94,7 +100,7 @@ export function OrdersScreen({ user }: { user: ApiUser }) {
   return (
     <View style={{ gap: 16 }}>
       <Text style={s.heading}>
-        {user.role === "delivery" ? "Deliveries" : "Orders"}
+        {user.role === "delivery" || deliveriesOnly ? "Deliveries" : "Orders"}
       </Text>
       <Button secondary label="Refresh orders" onPress={load} />
       <Feedback loading={loading} error={error} onRetry={load} />
@@ -122,6 +128,12 @@ export function OrdersScreen({ user }: { user: ApiUser }) {
             <Text style={s.badge}>{o.status}</Text>
           </View>
           <Text style={s.muted}>Order {o.id}</Text>
+          {user.role === "administrator" && (
+            <Text style={s.muted}>
+              Consumer {o.consumer} ? Farmer {o.producer} ? Delivery partner{" "}
+              {o.driver || "Unassigned"}
+            </Text>
+          )}
           <Button
             secondary
             label="Track on map"

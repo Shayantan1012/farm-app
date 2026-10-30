@@ -8,12 +8,14 @@ export function Field({
   onChange,
   numeric = false,
   secure = false,
+  phone = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   numeric?: boolean;
   secure?: boolean;
+  phone?: boolean;
 }) {
   return (
     <View style={{ gap: 7, marginBottom: 15 }}>
@@ -23,7 +25,8 @@ export function Field({
         style={s.input}
         value={value}
         onChangeText={onChange}
-        keyboardType={numeric ? "numeric" : "default"}
+        keyboardType={phone ? "phone-pad" : numeric ? "numeric" : "default"}
+        autoComplete={phone ? "tel" : undefined}
         secureTextEntry={secure}
         autoCapitalize={
           secure || label.toLowerCase().includes("email") ? "none" : "sentences"

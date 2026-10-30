@@ -16,6 +16,10 @@ export function AccountScreen({
 }) {
   const [name, setName] = useState(user.name),
     [address, setAddress] = useState(user.address),
+    [phone, setPhone] = useState(user.phone),
+    [city, setCity] = useState(user.city || ""),
+    [state, setState] = useState(user.state || ""),
+    [postalCode, setPostalCode] = useState(user.postalCode || ""),
     [farmName, setFarmName] = useState(user.farmName),
     [notifications, setNotifications] = useState(user.notifications),
     [error, setError] = useState(""),
@@ -27,7 +31,7 @@ export function AccountScreen({
     try {
       await api.request("/users/me", "PATCH", {
         name,
-        address,
+        address, phone, city, state, postalCode,
         notifications,
         ...(user.role === "producer" ? { farmName } : {}),
       });
@@ -54,7 +58,11 @@ export function AccountScreen({
       {user.role === "producer" && (
         <Field label="Farm name" value={farmName} onChange={setFarmName} />
       )}
+      <Field label="Phone number" value={phone} onChange={setPhone} phone />
       <Field label="Address" value={address} onChange={setAddress} />
+      <Field label="City / village" value={city} onChange={setCity} />
+      <Field label="State" value={state} onChange={setState} />
+      <Field label="Postal / PIN code" value={postalCode} onChange={setPostalCode} />
       <View style={s.between}>
         <Text style={s.label}>Notifications</Text>
         <Switch value={notifications} onValueChange={setNotifications} />

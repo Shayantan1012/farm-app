@@ -1,3 +1,4 @@
+import { Pagination } from "../components/admin/Pagination";
 import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
 import { api, ApiUser } from "../services/api";
@@ -7,23 +8,37 @@ import { Feedback } from "../components/Feedback";
 import { s } from "../styles/appStyles";
 export function SupportScreen({ user }: { user: ApiUser }) {
   const [tickets, setTickets] = useState<
-      { _id: string; text: string; status: string; resolution?: string }[]
+      {
+        _id: string;
+        text: string;
+        status: string;
+        resolution?: string;
+        user: string;
+        order?: string;
+        category: string;
+        createdAt: string;
+      }[]
     >([]),
     [text, setText] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [page, setPage] = useState(1),
+    [total, setTotal] = useState(0);
   const load = async () => {
     try {
-      setTickets(
-        (await api.request<{ tickets: typeof tickets }>("/tickets")).tickets,
-      );
+      const result = await api.request<{
+        tickets: typeof tickets;
+        total: number;
+      }>("/tickets?page=" + page);
+      setTickets(result.tickets);
+      setTotal(result.total);
     } catch (e) {
       setError((e as Error).message);
     }
   };
   useEffect(() => {
     void load();
-  }, []);
+  }, [page]);
   const submit = async (id?: string) => {
     setBusy(true);
     setError("");
@@ -55,10 +70,18 @@ export function SupportScreen({ user }: { user: ApiUser }) {
         disabled={busy}
         onPress={() => submit()}
       />
+      <Button secondary label="Refresh tickets" onPress={load} />
       {tickets.map((t) => (
         <View key={t._id} style={s.panel}>
           <Text style={s.cardTitle}>{t.status}</Text>
           <Text style={s.body}>{t.text}</Text>
+          {user.role === "administrator" && (
+            <Text style={s.muted}>
+              Ticket {t._id} ? User {t.user} ? {t.category} ?{" "}
+              {new Date(t.createdAt).toLocaleString()}
+              {t.order ? " ? Order " + t.order : ""}
+            </Text>
+          )}
           {t.resolution && <Text style={s.body}>{t.resolution}</Text>}
           {user.role === "administrator" && t.status !== "Resolved" && (
             <Button
@@ -69,6 +92,7 @@ export function SupportScreen({ user }: { user: ApiUser }) {
           )}
         </View>
       ))}
+      <Pagination page={page} total={total} onChange={setPage} />
     </View>
   );
 }

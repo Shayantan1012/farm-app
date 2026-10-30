@@ -186,6 +186,7 @@ export function CartScreen({
               label="Delivery destination"
               value={destinationLocation}
               onChange={setDestinationLocation}
+                onAddressChange={setAddress}
             />
           )}
           <Field

@@ -15,6 +15,22 @@ let gpsCallback,
 const locationMock = {
   Accuracy: { High: 4 },
   requestForegroundPermissionsAsync: async () => ({ status: permission }),
+  hasServicesEnabledAsync: async () => true,
+  enableNetworkProviderAsync: async () => {},
+  getCurrentPositionAsync: async () => ({
+    coords: { latitude: 22.5726, longitude: 88.3639, accuracy: 8 },
+    timestamp: Date.now(),
+    mocked: false,
+  }),
+  reverseGeocodeAsync: async () => [
+    {
+      formattedAddress: "Kolkata, West Bengal 700001, India",
+      city: "Kolkata",
+      region: "West Bengal",
+      postalCode: "700001",
+      country: "India",
+    },
+  ],
   watchPositionAsync: async (_options, callback) => {
     gpsCallback = callback;
     return {
@@ -37,6 +53,15 @@ const native = Object.fromEntries(
   ].map((k) => [k, k]),
 );
 Object.assign(native, {
+  View: ({ children, ...props }) => {
+    React.Children.forEach(children, (child) => {
+      assert.ok(
+        typeof child !== "string" && typeof child !== "number",
+        "Native View children must wrap text and numbers in a Text component",
+      );
+    });
+    return React.createElement("View", props, children);
+  },
   AppState: {
     currentState: "active",
     addEventListener: (_event, callback) => {
@@ -191,6 +216,83 @@ const waitFor = async (predicate) => {
     "No hard-coded photo fallback",
   );
   await click("Sign in / Register");
+  await click("First administrator setup");
+  await waitFor(() => Boolean(button("Create administrator")));
+  await fill("Administrator name", "First UI Admin");
+  await fill("Administrator email", "ui-admin@test.example");
+  await fill("Administrator password (at least 12 characters)", password);
+  await fill("Confirm administrator password", password);
+  await click("Create administrator");
+  await waitFor(() => text(app.root).includes("Administrator created"));
+  assert.equal(await User.countDocuments({ role: "administrator" }), 1);
+  await click("Back to sign in");
+  await click("First administrator setup");
+  await waitFor(() => text(app.root).includes("Administrator setup is closed"));
+  assert.equal(button("Create administrator"), undefined);
+  await click("Back to sign in");
+  await fill("Email address", "ui-admin@test.example");
+  await fill("Password (at least 12 characters)", password);
+  await act(async () => {
+    const buttons = app.root.findAll(
+      (n) => n.type === "Pressable" && text(n) === "Sign in",
+    );
+    await buttons.at(-1).props.onPress();
+  });
+  await waitFor(() => text(app.root).includes("Recorded cash collected"));
+  await click("Create administrator");
+  await fill("Administrator name", "Second UI Admin");
+  await fill("Administrator email", "ui-second@test.example");
+  await fill("Administrator password (at least 12 characters)", password);
+  await fill("Confirm administrator password", password);
+  await act(async () => {
+    const buttons = app.root.findAll(
+      (n) => n.type === "Pressable" && text(n) === "Create administrator",
+    );
+    await buttons.at(-1).props.onPress();
+  });
+  await waitFor(() => text(app.root).includes("ui-second@test.example"));
+  assert.equal(await User.countDocuments({ role: "administrator" }), 2);
+  await click("Farms");
+  await waitFor(() => text(app.root).includes("farmer@test.example"));
+  await click("Products");
+  await waitFor(() => text(app.root).includes("No records yet."));
+  await click("Account");
+  await click("Sign out");
+  await waitFor(() => Boolean(button("Sign in / Register")));
+  await click("Sign in / Register");
+  await click("Register");
+  await click("Consumer");
+  await fill("Your full name", "Registration Test");
+  await fill("Email address", "registration@test.example");
+  await fill("Phone number (optional)", "+91 98765 43210");
+  await fill("Street / village address", "12 Test Road");
+  await fill("City / village", "Kolkata");
+  await fill("State", "West Bengal");
+  await fill("Postal / PIN code", "700029");
+  await fill("Password (at least 12 characters)", password);
+  await fill("Confirm password", "different-password");
+  await click("Create account");
+  assert.ok(text(app.root).includes("Passwords do not match"));
+  assert.equal(
+    await User.countDocuments({ email: "registration@test.example" }),
+    0,
+  );
+  await fill("Confirm password", password);
+  await click("Create account");
+  await waitFor(() => text(app.root).includes("Enter the verification code"));
+  const registered = await User.findOne({ email: "registration@test.example" });
+  assert.equal(registered.address, "12 Test Road");
+  assert.equal(registered.city, "Kolkata");
+  assert.equal(registered.state, "West Bengal");
+  assert.equal(registered.postalCode, "700029");
+  assert.equal(registered.phone, "+919876543210");
+  await act(async () => {
+    const chip = app.root
+      .findAll((n) => n.type === "Pressable" && text(n) === "Sign in")
+      .at(-1);
+    await chip.props.onPress();
+  });
+
   await fill("Email address", "farmer@test.example");
   await fill("Password (at least 12 characters)", password);
   // Target the form button rather than the navigation entry with the same name.
@@ -207,8 +309,7 @@ const waitFor = async (predicate) => {
   await fill("Product name", "Farmer grown beans");
   await fill("Price per kg (₹)", "47.50");
   await fill("Available stock (kg)", "12");
-  await fill("Farm pickup latitude", "22.57");
-  await fill("Farm pickup longitude", "88.36");
+  await waitFor(() => text(app.root).includes("Kolkata, West Bengal 700001"));
   await fill("Farm location", "Farm test location");
   await fill(
     "Harvest date (YYYY-MM-DD)",
@@ -364,7 +465,7 @@ const waitFor = async (predicate) => {
   await waitFor(() => text(app.root).includes("Cannot reach the farm server"));
   assert.equal(app.root.findAll((n) => n.type === "Image").length, 0);
   console.log(
-    "PASS: real farmer sign-in, empty catalog, form validation, MongoDB product/photo persistence, image retrieval, edit, pause, reactivate, delete, public catalog refresh connection-error state, shared tracking UI, GPS permission denial, publication, background stop and unmount cleanup.",
+    "PASS: one-time administrator setup, closed setup page, admin sign-in, second-admin creation, admin business pages, registration confirmation, real farmer sign-in, empty catalog, form validation, MongoDB product/photo persistence, image retrieval, edit, pause, reactivate, delete, public catalog refresh connection-error state, shared tracking UI, GPS permission denial, publication, background stop and unmount cleanup.",
   );
 })()
   .catch((error) => {

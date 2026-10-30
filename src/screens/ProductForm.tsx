@@ -164,6 +164,7 @@ export function ProductForm({
         label="Farm pickup"
         value={pickupLocation}
         onChange={setPickupLocation}
+        onAddressChange={setLocation}
       />
       <Text style={s.label}>Category</Text>
       <Chips
