@@ -102,6 +102,8 @@ function load(file) {
       };
     if (id === "expo-location") return locationMock;
     if (id === "react-native-webview") return { WebView: "WebView" };
+    if (id === "@react-native-community/datetimepicker")
+      return { __esModule: true, default: "DateTimePicker" };
     if (id === "expo-status-bar") return { StatusBar: "StatusBar" };
     if (id === "@expo/vector-icons") return { Ionicons: "Icon" };
     if (id === "expo-image-picker")
@@ -155,6 +157,16 @@ const fill = async (label, value) => {
   )[0];
   assert.ok(field, "Field exists: " + label);
   await act(async () => field.props.onChangeText(value));
+};
+const chooseDate = async (label, value) => {
+  await click(label);
+  const picker = app.root.findAll(
+    (node) => node.type === "DateTimePicker",
+  )[0];
+  assert.ok(picker, "Calendar exists: " + label);
+  await act(async () =>
+    picker.props.onChange({ type: "set" }, new Date(value + "T12:00:00")),
+  );
 };
 const waitFor = async (predicate) => {
   for (let i = 0; i < 150; i++) {
@@ -328,10 +340,7 @@ const waitFor = async (predicate) => {
   await fill("Available stock (kg)", "12");
   await waitFor(() => text(app.root).includes("Kolkata, West Bengal 700001"));
   await fill("Farm location", "Farm test location");
-  await fill(
-    "Harvest date (YYYY-MM-DD)",
-    new Date().toISOString().slice(0, 10),
-  );
+  await chooseDate("Harvest date", new Date().toISOString().slice(0, 10));
   await click("Choose product photo");
   await click("Save product");
   await waitFor(() => Boolean(button("Edit product")));

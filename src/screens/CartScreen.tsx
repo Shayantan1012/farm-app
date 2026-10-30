@@ -6,6 +6,8 @@ import { LocalizedText as Text } from "../i18n/I18n";
 import { api, ApiProduct, CheckoutInput } from "../services/api";
 import { Button } from "../components/Button";
 import { Field } from "../components/Field";
+import { DateField } from "../components/DateField";
+import { localDateTimeValue } from "../components/DateField.types";
 import { Chips } from "../components/Chips";
 import { Feedback } from "../components/Feedback";
 import { ProductPhoto } from "../components/ProductPhoto";
@@ -78,8 +80,14 @@ export function CartScreen({
   const checkout = async () => {
     if (saving.current) return;
     setError("");
-    if (!slot || Number.isNaN(Date.parse(slot))) {
-      setError("Enter a future delivery time, e.g. YYYY-MM-DDTHH:mm+05:30.");
+    const selectedTime = Date.parse(slot);
+    if (
+      !slot ||
+      Number.isNaN(selectedTime) ||
+      selectedTime <= Date.now() ||
+      selectedTime > Date.now() + 7 * 86400000
+    ) {
+      setError("Choose a future delivery or pickup time within the next seven days.");
       return;
     }
     if (items.some((l) => !l.product)) {
@@ -190,10 +198,15 @@ export function CartScreen({
                 onAddressChange={setAddress}
             />
           )}
-          <Field
-            label="Delivery / pickup time (YYYY-MM-DDTHH:mm+05:30)"
+          <DateField
+            label="Delivery / pickup date and time"
             value={slot}
             onChange={setSlot}
+            mode="datetime"
+            minimum={localDateTimeValue(new Date())}
+            maximum={localDateTimeValue(
+              new Date(Date.now() + 7 * 86400000),
+            )}
           />
           <Field
             label="Coupon (optional)"

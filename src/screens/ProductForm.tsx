@@ -6,6 +6,7 @@ import { LocalizedText as Text } from "../i18n/I18n";
 import * as ImagePicker from "expo-image-picker";
 import { api, ApiProduct, ProductInput } from "../services/api";
 import { Field } from "../components/Field";
+import { DateField } from "../components/DateField";
 import { Button } from "../components/Button";
 import { Chips } from "../components/Chips";
 import { Feedback } from "../components/Feedback";
@@ -180,24 +181,23 @@ export function ProductForm({
         value={method}
         onChange={setMethod}
       />
-      <Field
-        label="Harvest date (YYYY-MM-DD)"
+      <DateField
+        label="Harvest date"
         value={harvest}
         onChange={setHarvest}
+        maximum={new Date().toISOString().slice(0, 10)}
       />
-      <Field
-        label="Expiry date (optional; today or later, YYYY-MM-DD)"
+      <DateField
+        label="Expiry date (optional)"
         value={expiry}
         onChange={setExpiry}
+        minimum={
+          harvest && harvest > new Date().toISOString().slice(0, 10)
+            ? harvest
+            : new Date().toISOString().slice(0, 10)
+        }
+        optional
       />
-      {!!expiry && (
-        <Button
-          secondary
-          label="Clear expiry date"
-          disabled={busy}
-          onPress={() => setExpiry("")}
-        />
-      )}
       <Chips
         options={["Delivery & pickup", "Pickup only", "Delivery only"]}
         value={delivery}

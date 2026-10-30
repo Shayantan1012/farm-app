@@ -27,7 +27,8 @@
         {
           "locationWhenInUsePermission": "Allow Harvest to select farm and delivery pins and share your position during an active delivery."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ]
   }
 }

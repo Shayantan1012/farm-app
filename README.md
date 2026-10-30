@@ -79,3 +79,7 @@ The workspace has separate components for setup, account creation, dashboard met
 Open the language button beside **Sign in / Register**, or open **Account → Language** after signing in. Harvest supports English, Bengali, Hindi, Assamese, Odia, Nepali, Tamil and Telugu. Bengali and Hindi include the main registration, marketplace, product, basket, order, tracking and administration vocabulary. The other language packs cover navigation and common actions; untranslated new or detailed messages fall back to English so controls never disappear.
 
 The choice is stored on the device. Registration saves the chosen language with the new MongoDB account. Signing in loads that account's preference, and changing language while signed in updates `/api/users/me`. Internal filter and role values remain stable English API codes, so translating a label does not alter searches, permissions or saved data.
+
+## Calendar and time selection
+
+Product harvest and optional expiry fields use calendar controls. Harvest cannot be after today, and expiry cannot be before today. Basket checkout uses a combined calendar and clock, limited to a future delivery or pickup time within seven days. Android and iOS use their native date/time dialogs; web uses the browser's date and `datetime-local` controls. Users no longer need to type ISO date strings manually.
