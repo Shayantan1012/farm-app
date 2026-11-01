@@ -15,6 +15,7 @@ export function CheckoutTiming({
   error,
   slot,
   onSlotChange,
+  onRefresh,
 }: {
   method: string;
   hasDestination: boolean;
@@ -23,6 +24,7 @@ export function CheckoutTiming({
   error: string;
   slot: string;
   onSlotChange: (value: string) => void;
+  onRefresh: () => void;
 }) {
   const delivery = method === "Home delivery";
   const selectSlot = (value: string) => {
@@ -42,7 +44,7 @@ export function CheckoutTiming({
           availability.
         </Text>
       )}
-      {loading && <Text style={s.muted}>Calculating available times…</Text>}
+      {loading && <Text style={s.muted}>Checking current availability…</Text>}
       {!!error && (
         <Text accessibilityRole="alert" style={s.body}>
           {error}
@@ -53,27 +55,41 @@ export function CheckoutTiming({
           <Text style={s.cardTitle}>
             {delivery ? "Home delivery timing" : "Farm pickup timing"}
           </Text>
-          <Text style={s.body}>
-            Earliest suggested time:{" "}
-            {new Date(quote.minimumSlot).toLocaleString("en-IN", {
-              timeZone: "Asia/Kolkata",
-              dateStyle: "medium",
-              timeStyle: "short",
-            })}{" "}
-            IST
-          </Text>
+          {quote.minimumSlot && (
+            <Text style={s.body}>
+              {delivery ? "Estimated arrival: " : "Earliest pickup: "}
+              {new Date(quote.minimumSlot).toLocaleString("en-IN", {
+                timeZone: "Asia/Kolkata",
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}{" "}
+              IST
+            </Text>
+          )}
+          {delivery && quote.available && quote.estimatedMinutes !== null && (
+            <Text style={s.body}>
+              Approximately {Math.floor(quote.estimatedMinutes / 60)} hour(s)
+              {quote.estimatedMinutes % 60 ? ` ${quote.estimatedMinutes % 60} minutes` : ""} from now
+            </Text>
+          )}
           {delivery && (
             <Text style={s.body}>
               Farm-to-home distance: about {quote.distanceKm.toFixed(1)} km ·{" "}
-              {quote.availablePartners} partner(s) currently available near the
-              farm.
+              {quote.availablePartners} of {quote.requiredPartners} needed
+              partner(s) currently available near the farm.
             </Text>
           )}
-          {delivery && quote.availablePartners === 0 && (
+          {delivery && !quote.available && (
+            <Text accessibilityRole="alert" style={s.body}>
+              Home delivery is currently unavailable. Please try again when
+              nearby partners are online, or choose farm pickup.
+            </Text>
+          )}
+          {delivery && quote.available && (
             <Text style={s.muted}>
-              No nearby partner is online right now, so the estimate includes
-              extra time. A partner is assigned when the farm marks the order
-              ready.
+              This estimate includes farm preparation and travel from an
+              available partner to the farm and then to you. It may change
+              during fulfilment.
             </Text>
           )}
           {!delivery && (
@@ -82,29 +98,38 @@ export function CheckoutTiming({
               your order.
             </Text>
           )}
-          <Text style={s.muted}>
-            Choose a 30-minute slot during {quote.serviceHours}. Timing is an
-            estimate; the farmer and partner confirm fulfilment after ordering.
-          </Text>
-          <Button
-            secondary
-            label="Use suggested time"
-            onPress={() =>
-              onSlotChange(localDateTimeValue(new Date(quote.minimumSlot)))
-            }
-          />
+          {!delivery && (
+            <>
+              <Text style={s.muted}>
+                Choose a 30-minute pickup slot during {quote.serviceHours}.
+              </Text>
+              {quote.minimumSlot && (
+                <Button
+                  secondary
+                  label="Use suggested time"
+                  onPress={() =>
+                    onSlotChange(localDateTimeValue(new Date(quote.minimumSlot!)))
+                  }
+                />
+              )}
+            </>
+          )}
         </View>
       )}
-      <DateField
-        label="Delivery / pickup date and time"
-        value={slot}
-        onChange={selectSlot}
-        mode="datetime"
-        minimum={localDateTimeValue(
-          quote ? new Date(quote.minimumSlot) : new Date(),
-        )}
-        maximum={localDateTimeValue(new Date(Date.now() + 7 * 86400000))}
-      />
+      {delivery ? (
+        <Button secondary label="Refresh delivery estimate" onPress={onRefresh} />
+      ) : (
+        <DateField
+          label="Farm pickup date and time"
+          value={slot}
+          onChange={selectSlot}
+          mode="datetime"
+          minimum={localDateTimeValue(
+            quote?.minimumSlot ? new Date(quote.minimumSlot) : new Date(),
+          )}
+          maximum={localDateTimeValue(new Date(Date.now() + 7 * 86400000))}
+        />
+      )}
     </View>
   );
 }

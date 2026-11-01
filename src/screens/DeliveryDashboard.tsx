@@ -232,7 +232,7 @@ export function DeliveryDashboard({ user }: { user: ApiUser }) {
           </View>
           <View style={s.deliveryFacts}>
             <Text style={s.body}>
-              Scheduled {new Date(current.slot).toLocaleString()}
+              Estimated delivery {new Date(current.slot).toLocaleString()}
             </Text>
             {current.assignmentDistanceKm !== undefined && (
               <Text style={s.body}>

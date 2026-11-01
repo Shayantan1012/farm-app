@@ -42,6 +42,7 @@ export function CartScreen({
     [slot, setSlot] = useState(""),
     [coupon, setCoupon] = useState(""),
     [quote, setQuote] = useState<SlotQuote | null>(null),
+    [quoteRefresh, setQuoteRefresh] = useState(0),
     [quoteLoading, setQuoteLoading] = useState(false),
     [quoteError, setQuoteError] = useState("");
   const [destinationLocation, setDestinationLocation] = useState<
@@ -105,7 +106,12 @@ export function CartScreen({
       current = false;
       clearTimeout(timer);
     };
-  }, [quoteKey]);
+  }, [quoteKey, quoteRefresh]);
+  useEffect(() => {
+    if (method !== "Home delivery" || !items.length) return;
+    const timer = setInterval(() => setQuoteRefresh((count) => count + 1), 30000);
+    return () => clearInterval(timer);
+  }, [method, items.length]);
   const change = async (index: number, delta: number) => {
     if (busy) return;
     setBusy(true);
@@ -138,16 +144,16 @@ export function CartScreen({
   const checkout = async () => {
     if (saving.current) return;
     setError("");
-    const selectedTime = Date.parse(slot);
+    const pickup = method === "Farm pickup";
+    const selectedTime = pickup ? Date.parse(slot) : NaN;
     if (
-      !slot ||
-      Number.isNaN(selectedTime) ||
-      selectedTime <= Date.now() ||
-      selectedTime > Date.now() + 7 * 86400000
+      pickup &&
+      (!slot ||
+        Number.isNaN(selectedTime) ||
+        selectedTime <= Date.now() ||
+        selectedTime > Date.now() + 7 * 86400000)
     ) {
-      setError(
-        "Choose a future delivery or pickup time within the next seven days.",
-      );
+      setError("Choose a future farm pickup time within the next seven days.");
       return;
     }
     if (items.some((l) => !l.product)) {
@@ -158,25 +164,39 @@ export function CartScreen({
       setError("Select the delivery destination map pin.");
       return;
     }
-    if (!quote || selectedTime < Date.parse(quote.minimumSlot)) {
-      setError("Select a time on or after the suggested earliest slot.");
+    if (method === "Home delivery" && address.startsWith("Pin coordinates:")) {
+      setError("Add your street or building details to the delivery address before placing the order.");
       return;
     }
-    const indiaTime = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Asia/Kolkata",
-      hour: "2-digit",
-      minute: "2-digit",
-      hourCycle: "h23",
-    }).format(new Date(selectedTime));
-    const [hour, minute] = indiaTime.split(":").map(Number);
-    if (
-      hour < 9 ||
-      hour > 19 ||
-      (hour === 19 && minute !== 0) ||
-      minute % 30 !== 0
-    ) {
-      setError("Choose a 30-minute slot between 09:00 and 19:00 IST.");
+    if (!quote || quoteLoading || !quote.available || !quote.minimumSlot) {
+      setError(
+        pickup
+          ? "Wait for a pickup time estimate."
+          : "Home delivery is unavailable until enough nearby partners are online.",
+      );
       return;
+    }
+    if (pickup && selectedTime < Date.parse(quote.minimumSlot)) {
+      setError("Select a time on or after the suggested earliest pickup slot.");
+      return;
+    }
+    if (pickup) {
+      const indiaTime = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Kolkata",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }).format(new Date(selectedTime));
+      const [hour, minute] = indiaTime.split(":").map(Number);
+      if (
+        hour < 9 ||
+        hour > 19 ||
+        (hour === 19 && minute !== 0) ||
+        minute % 30 !== 0
+      ) {
+        setError("Choose a 30-minute slot between 09:00 and 19:00 IST.");
+        return;
+      }
     }
     if (
       recipientName.trim().length < 2 ||
@@ -197,7 +217,7 @@ export function CartScreen({
       recipientName: recipientName.trim(),
       recipientPhone: recipientPhone.trim().replace(/[\s()-]/g, ""),
       deliveryInstructions: deliveryInstructions.trim(),
-      slot: new Date(slot).toISOString(),
+      ...(pickup ? { slot: new Date(slot).toISOString() } : {}),
       coupon: coupon.trim().toUpperCase() as CheckoutInput["coupon"],
     };
     const body = JSON.stringify(input);
@@ -217,6 +237,7 @@ export function CartScreen({
       onOrdered();
     } catch (e) {
       setError((e as Error).message);
+      if (!pickup) setQuoteRefresh((count) => count + 1);
     } finally {
       setBusy(false);
       saving.current = false;
@@ -288,7 +309,13 @@ export function CartScreen({
               label="Delivery destination"
               value={destinationLocation}
               onChange={setDestinationLocation}
-              onAddressChange={setAddress}
+              onAddressChange={(detected, expectedPrevious) =>
+                setAddress((current) =>
+                  !expectedPrevious || current === expectedPrevious
+                    ? detected
+                    : current,
+                )
+              }
             />
           )}
           <Field
@@ -319,6 +346,7 @@ export function CartScreen({
             error={quoteError}
             slot={slot}
             onSlotChange={setSlot}
+            onRefresh={() => setQuoteRefresh((count) => count + 1)}
           />
           <Field
             label="Coupon (optional)"
@@ -342,7 +370,7 @@ export function CartScreen({
           </Text>
           <Button
             label={busy ? "Placing order…" : "Place order"}
-            disabled={busy || loading || quoteLoading || !quote}
+            disabled={busy || loading || quoteLoading || !quote?.available}
             onPress={checkout}
           />
         </View>

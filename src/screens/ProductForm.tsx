@@ -167,7 +167,13 @@ export function ProductForm({
         label="Farm pickup"
         value={pickupLocation}
         onChange={setPickupLocation}
-        onAddressChange={setLocation}
+        onAddressChange={(detected, expectedPrevious) =>
+          setLocation((current) =>
+            !expectedPrevious || current === expectedPrevious
+              ? detected
+              : current,
+          )
+        }
       />
       <Text style={s.label}>Category</Text>
       <Chips

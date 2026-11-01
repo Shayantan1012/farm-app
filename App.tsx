@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   ScrollView,
@@ -34,6 +34,13 @@ function AppContent() {
     [revision, setRevision] = useState(0),
     [notice, setNotice] = useState(""),
     [basketCount, setBasketCount] = useState(0);
+  useEffect(() => api.onUnauthorized(() => {
+    setUser(null);
+    setBasketCount(0);
+    setNotice("Your session ended. Please sign in again.");
+    setPage("Sign in");
+    setRevision((value) => value + 1);
+  }), []);
   const refreshUser = async () => {
     setUser((await api.me()).user);
   };
@@ -105,7 +112,7 @@ function AppContent() {
       : [{ label: "Sign in", icon: "person-outline" as IconName }]),
   ];
   const navigate = (p: string) => {
-    setPage(p);
+    setPage(!user && !["Explore", "Sign in", "Language", "Admin setup"].includes(p) ? "Sign in" : p);
     setNotice("");
   };
   const changeLanguage = async (next: Language) => {

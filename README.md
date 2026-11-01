@@ -46,7 +46,7 @@ Frontend integration tests render the real farmer screens and send real HTTP req
 ## Order maps and delivery tracking
 
 1. Farmer: add or edit a product and choose its **Farm pickup** pin. The app detects the current phone location and fills the farm address. Tap the map to adjust it or press **Detect my current location** to retry. Existing products need a pickup pin before they can be ordered.
-2. Consumer: choose **Home delivery** in the basket, enter the address and select the **Delivery destination** pin. Enter the recipient name, phone, and optional instructions. The app estimates the earliest 30-minute time from farm distance and nearby partner availability. **Farm pickup** uses a preparation window. Both use 09:00–19:00 IST slots within seven days; the server validates the selected slot again at checkout.
+2. Consumer: choose **Home delivery** in the basket, enter the address and select the **Delivery destination** pin. Enter the recipient name, phone, and optional instructions. The server calculates the home delivery ETA from farm preparation, distance, and nearby online partner availability. There is no delivery date picker. If there are not enough partners for the farm pickup points, home delivery is unavailable until availability changes. **Farm pickup** keeps a selectable 30-minute slot after its preparation window. The server recalculates the ETA or validates the pickup slot at checkout.
 3. Farmer: progress the order through Accepted, Preparing and Ready for Pickup.
 4. An approved delivery partner signs in, opens **Orders**, and goes online with current GPS. The server assigns an eligible partner when the order is ready; the assigned partner sees the current delivery and both endpoints.
 5. Any participant opens **Orders / Deliveries ? Track on map**. Green is pickup, blue is destination, orange is the delivery partner. The partner presses **Start sharing location** and allows foreground location permission.
@@ -74,6 +74,8 @@ Setup shows a closed message if an administrator already exists, including one c
 
 The workspace has separate components for setup, account creation, dashboard metrics, user management and record lists. Its pages cover users/contact details, farms and approvals, admin access, all products, orders, deliveries/maps, support tickets, reviews and audit history. Phone and address fields are stored with profiles; registration confirms matching passwords before sending the request.
 
+**Admin → Cleanup** also offers separate buttons to clear every login session or all audit events. Each requires the administrator password and the displayed confirmation phrase. Clearing sessions returns the current administrator to Sign in and marks delivery partners offline; clearing audit events leaves the Activity list empty.
+
 ## App languages
 
 Open the language button beside **Sign in / Register**, or open **Account → Language** after signing in. Harvest supports English, Bengali, Hindi, Assamese, Odia, Nepali, Tamil and Telugu. Bengali and Hindi include the main registration, marketplace, product, basket, order, tracking and administration vocabulary. The other language packs cover navigation and common actions; untranslated new or detailed messages fall back to English so controls never disappear.
@@ -82,4 +84,4 @@ The choice is stored on the device. Registration saves the chosen language with 
 
 ## Calendar and time selection
 
-Product harvest and optional expiry fields use calendar controls. Harvest cannot be after today, and expiry cannot be before today. Basket checkout uses a combined calendar and clock, limited to a future delivery or pickup time within seven days. Android and iOS use their native date/time dialogs; web uses the browser's date and `datetime-local` controls. Users no longer need to type ISO date strings manually.
+Product harvest and optional expiry fields use calendar controls. Harvest cannot be after today, and expiry cannot be before today. Farm pickup uses a combined calendar and clock for a time within seven days; home delivery displays an automatically calculated estimate. Android and iOS use native date/time dialogs for pickup; web uses the browser's date and `datetime-local` controls.

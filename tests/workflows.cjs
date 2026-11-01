@@ -136,6 +136,18 @@ function load(file) {
 // Real HTTP requests and a real temporary MongoDB replica set. Only native view
 // primitives and the device photo picker are replaced for this Node test.
 let app, server, replica, mongoose;
+const networkFetch = global.fetch;
+let addressProviderCalls = 0;
+global.fetch = (input, options) => {
+  if (String(input).startsWith("https://nominatim.openstreetmap.org/reverse")) {
+    addressProviderCalls++;
+    return Promise.resolve({
+      ok: true,
+      json: async () => ({ display_name: "Kolkata, West Bengal 700001, India" }),
+    });
+  }
+  return networkFetch(input, options);
+};
 const text = (node) =>
   typeof node === "string" ? node : node?.children?.map(text).join("") || "";
 const button = (label) =>
@@ -264,12 +276,42 @@ const waitFor = async (predicate) => {
         error: "",
         slot: "",
         onSlotChange: (value) => { selectedSlot = value; },
+        onRefresh: () => {},
       }),
     );
   });
   assert.ok(text(app.root).includes("Farm pickup timing"));
   await click("Use suggested time");
   assert.equal(selectedSlot, localDateTimeValue(suggested));
+  await act(async () => app.unmount());
+  app = null;
+  let estimateRefreshes = 0;
+  await act(async () => {
+    app = create(React.createElement(CheckoutTiming, {
+      method: "Home delivery",
+      hasDestination: true,
+      quote: {
+        minimumSlot: null,
+        maximumSlot: new Date(Date.now() + 7 * 86400000).toISOString(),
+        distanceKm: 12,
+        availablePartners: 0,
+        requiredPartners: 1,
+        available: false,
+        estimatedMinutes: null,
+        method: "delivery",
+        serviceHours: "09:00–19:00 IST",
+      },
+      loading: false,
+      error: "",
+      slot: "",
+      onSlotChange: () => { throw new Error("Delivery time must be automatic"); },
+      onRefresh: () => { estimateRefreshes++; },
+    }));
+  });
+  assert.ok(text(app.root).includes("Home delivery is currently unavailable"));
+  assert.ok(!text(app.root).includes("Farm pickup date and time"));
+  await click("Refresh delivery estimate");
+  assert.equal(estimateRefreshes, 1);
   await act(async () => app.unmount());
   app = null;
   const { StarRating } = load(
@@ -356,6 +398,30 @@ const waitFor = async (predicate) => {
   await waitFor(() => text(app.root).includes("farmer@test.example"));
   await click("Products");
   await waitFor(() => text(app.root).includes("No records yet."));
+  await click("Cleanup");
+  await waitFor(() => text(app.root).includes("Database cleanup"));
+  await waitFor(() => text(app.root).includes("Current records"));
+  await click("Reset marketplace data");
+  assert.ok(button("Confirm permanent deletion").props.disabled);
+  await fill("Confirmation phrase", "DELETE ALL");
+  await fill("Administrator password", password);
+  assert.equal(button("Confirm permanent deletion").props.disabled, false);
+  await click("Cancel cleanup");
+  await click("Clear all login sessions");
+  await fill("Confirmation phrase", "DELETE SESSIONS");
+  await fill("Administrator password", password);
+  await click("Confirm permanent deletion");
+  await waitFor(() => text(app.root).includes("Your session ended. Please sign in again."));
+  assert.ok(text(app.root).includes("Welcome to Harvest"));
+  await fill("Email address", "ui-admin@test.example");
+  await fill("Password (at least 12 characters)", password);
+  await act(async () => {
+    const buttons = app.root.findAll(
+      (n) => n.type === "Pressable" && text(n) === "Sign in",
+    );
+    await buttons.at(-1).props.onPress();
+  });
+  await waitFor(() => text(app.root).includes("Recorded cash collected"));
   await click("Account");
   await click("Sign out");
   await waitFor(() => Boolean(button("Sign in / Register")));
@@ -393,7 +459,43 @@ const waitFor = async (predicate) => {
     await chip.props.onPress();
   });
 
+  const basketBuyer = await User.create({
+    name: "Basket Buyer",
+    email: "basket-buyer@test.example",
+    role: "consumer",
+    passwordHash: await hashPassword(password),
+    verified: true,
+  });
+  await fill("Email address", basketBuyer.email);
+  await fill("Password (at least 12 characters)", password);
+  await act(async () => {
+    const buttons = app.root.findAll(
+      (n) => n.type === "Pressable" && text(n) === "Sign in",
+    );
+    await buttons.at(-1).props.onPress();
+  });
+  await waitFor(() => Boolean(button("Basket")));
+  await click("Basket");
+  await waitFor(() => text(app.root).includes("Your basket is empty."));
+  const { Session } = await moduleAt("src/models/Session.js");
+  await Session.deleteMany({ user: basketBuyer._id });
+  await click("Explore");
+  await click("Basket");
+  await waitFor(() => text(app.root).includes("Your session ended. Please sign in again."));
+  assert.ok(text(app.root).includes("Welcome to Harvest"));
+  assert.equal(button("Basket"), undefined);
+  assert.ok(!text(app.root).includes("Authentication required"));
   await fill("Email address", "farmer@test.example");
+  await fill("Password (at least 12 characters)", "incorrect-password");
+  await act(async () => {
+    const buttons = app.root.findAll(
+      (n) => n.type === "Pressable" && text(n) === "Sign in",
+    );
+    await buttons.at(-1).props.onPress();
+  });
+  await waitFor(() => text(app.root).includes("Invalid email or password"));
+  assert.ok(text(app.root).includes("Welcome to Harvest"));
+
   await fill("Password (at least 12 characters)", password);
   // Target the form button rather than the navigation entry with the same name.
   await act(async () => {
@@ -410,6 +512,11 @@ const waitFor = async (predicate) => {
   await fill("Price per kg (₹)", "47.50");
   await fill("Available stock (kg)", "12");
   await waitFor(() => text(app.root).includes("Kolkata, West Bengal 700001"));
+  const farmAddress = app.root.findAll(
+    (n) => n.type === "TextInput" && n.props.accessibilityLabel === "Farm location",
+  )[0];
+  assert.equal(farmAddress.props.value, "Kolkata, West Bengal 700001, India");
+  assert.ok(addressProviderCalls > 0, "web address lookup uses the backend provider");
   await fill("Farm location", "Farm test location");
   await chooseDate("Harvest date", new Date().toISOString().slice(0, 10));
   await click("Choose product photo");
@@ -581,6 +688,7 @@ const waitFor = async (predicate) => {
     process.exitCode = 1;
   })
   .finally(async () => {
+    global.fetch = networkFetch;
     if (app) await act(async () => app.unmount());
     if (server) await new Promise((r) => server.close(r));
     if (mongoose) await mongoose.disconnect();

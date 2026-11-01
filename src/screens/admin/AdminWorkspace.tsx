@@ -9,6 +9,7 @@ import { OrdersScreen } from "../OrdersScreen";
 import { SupportScreen } from "../SupportScreen";
 import { AdminOverview } from "./AdminOverview";
 import { AdminRecords } from "./AdminRecords";
+import { AdminCleanup } from "./AdminCleanup";
 import { s } from "../../styles/appStyles";
 export function AdminWorkspace({ user }: { user: ApiUser }) {
   const [tab, setTab] = useState("Overview"),
@@ -29,6 +30,7 @@ export function AdminWorkspace({ user }: { user: ApiUser }) {
           "Support",
           "Reviews",
           "Activity",
+          "Cleanup",
         ]}
         value={tab}
         onChange={(v) => {
@@ -64,6 +66,7 @@ export function AdminWorkspace({ user }: { user: ApiUser }) {
         {tab === "Products" && <AdminRecords kind="products" />}
         {tab === "Reviews" && <AdminRecords kind="reviews" />}
         {tab === "Activity" && <AdminRecords kind="audit" />}
+        {tab === "Cleanup" && <AdminCleanup />}
         {["Orders", "Deliveries"].includes(tab) && (
           <OrdersScreen user={user} deliveriesOnly={tab === "Deliveries"} />
         )}

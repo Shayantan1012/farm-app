@@ -96,14 +96,17 @@ export type CheckoutInput = {
   recipientName: string;
   recipientPhone: string;
   deliveryInstructions: string;
-  slot: string;
+  slot?: string;
   coupon?: "" | "FRESH10";
 };
 export type SlotQuote = {
-  minimumSlot: string;
+  minimumSlot: string | null;
   maximumSlot: string;
   distanceKm: number;
   availablePartners: number;
+  requiredPartners: number;
+  available: boolean;
+  estimatedMinutes: number | null;
   method: "delivery" | "pickup";
   serviceHours: string;
 };
@@ -119,12 +122,18 @@ export class ApiError extends Error {
 /** Token stays in memory. Use secure device storage if adding remembered login. */
 export function createApiClient(baseUrl = API_URL) {
   let accessToken: string | null = null;
+  const unauthorizedListeners = new Set<() => void>();
+  const clearSession = () => {
+    accessToken = null;
+    unauthorizedListeners.forEach((listener) => listener());
+  };
   async function request<T>(
     path: string,
     method = "GET",
     body?: unknown,
     extraHeaders: Record<string, string> = {},
   ): Promise<T> {
+    const requestToken = accessToken;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
@@ -133,13 +142,16 @@ export function createApiClient(baseUrl = API_URL) {
         signal: controller.signal,
         headers: {
           ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
-          ...(accessToken ? { Authorization: "Bearer " + accessToken } : {}),
+          ...(requestToken ? { Authorization: "Bearer " + requestToken } : {}),
           ...extraHeaders,
         },
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       });
       if (response.status === 204) return undefined as T;
       const payload = await response.json().catch(() => ({}));
+      if (response.status === 401 && !path.startsWith("/auth/") && accessToken === requestToken) {
+        clearSession();
+      }
       if (!response.ok)
         throw new ApiError(
           response.status,
@@ -158,6 +170,11 @@ export function createApiClient(baseUrl = API_URL) {
   }
   return {
     request,
+    clearSession,
+    onUnauthorized(listener: () => void) {
+      unauthorizedListeners.add(listener);
+      return () => { unauthorizedListeners.delete(listener); };
+    },
     setToken(token: string | null) {
       accessToken = token;
     },

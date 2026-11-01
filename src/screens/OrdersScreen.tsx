@@ -170,7 +170,7 @@ function OrderList({
             </Text>
           ))}
           <Text style={s.body}>
-            {o.method} · {new Date(o.slot).toLocaleString()}
+            {o.method === "delivery" ? "Estimated delivery" : "Farm pickup"} · {new Date(o.slot).toLocaleString()}
           </Text>
           <Text style={s.body}>{o.address}</Text>
           {!!o.recipientName && (

@@ -7,6 +7,7 @@ import { Point, validPoint } from "./types";
 import { Button } from "../Button";
 import { Field } from "../Field";
 import { s } from "../../styles/appStyles";
+import { api } from "../../services/api";
 
 export function LocationPicker({
   label,
@@ -18,7 +19,7 @@ export function LocationPicker({
   label: string;
   value?: Point;
   onChange: (point: Point | undefined) => void;
-  onAddressChange?: (address: string) => void;
+  onAddressChange?: (address: string, expectedPrevious?: string) => void;
   autoDetect?: boolean;
 }) {
   const [latitude, setLatitude] = useState(value ? String(value.latitude) : "");
@@ -48,17 +49,30 @@ export function LocationPicker({
       .filter((part, index, all) => part && all.indexOf(part) === index)
       .join(", ");
 
-  const resolveAddress = async (point: Point) => {
-    const request = ++addressRequest.current;
+  const resolveAddress = async (point: Point, fallback: string, request: number) => {
     try {
-      const place = (await Location.reverseGeocodeAsync(point))[0];
-      const resolved = place ? formatAddress(place) : "";
+      let resolved = "";
+      if (Platform.OS !== "web") {
+        try {
+          const place = (await Location.reverseGeocodeAsync(point))[0];
+          resolved = place ? formatAddress(place) : "";
+        } catch {
+          // The backend lookup also covers devices without a native result.
+        }
+      }
+      if (!resolved) {
+        const result = await api.request<{ address: string }>(
+          `/location/reverse?latitude=${point.latitude}&longitude=${point.longitude}`,
+        );
+        resolved = result.address;
+      }
       if (request === addressRequest.current && resolved) {
         setAddress(resolved);
-        onAddressChange?.(resolved);
+        onAddressChange?.(resolved, fallback);
       }
     } catch {
-      // Keep the valid pin when the device geocoder is temporarily unavailable.
+      if (request === addressRequest.current)
+        setError("Address lookup unavailable. Add the street and building details above.");
     }
   };
 
@@ -66,12 +80,16 @@ export function LocationPicker({
     point: Point,
     selectedBy: "gps" | "map" | "manual",
   ) => {
+    const request = ++addressRequest.current;
+    const fallback = `Pin coordinates: ${point.latitude.toFixed(6)}, ${point.longitude.toFixed(6)}`;
     setLatitude(String(point.latitude));
     setLongitude(String(point.longitude));
     onChange(point);
     setSource(selectedBy);
     setError("");
-    if (selectedBy !== "manual") void resolveAddress(point);
+    setAddress(fallback);
+    onAddressChange?.(fallback);
+    if (selectedBy !== "manual") void resolveAddress(point, fallback, request);
   };
 
   const edit = (lat: string, lon: string) => {
@@ -129,8 +147,8 @@ export function LocationPicker({
     <View style={{ gap: 10 }}>
       <Text style={s.label}>{label}</Text>
       <Text style={s.muted}>
-        We detect your phone location and address. Tap another point on the map
-        if you need to adjust the pin.
+        We detect your device location and fill the address when a readable
+        result is available. Check the street and building details before ordering.
       </Text>
       <Button
         secondary
@@ -144,8 +162,18 @@ export function LocationPicker({
       />
       {!!address && (
         <View style={s.panel}>
-          <Text style={s.label}>Detected address</Text>
+          <Text style={s.label}>
+            {address.startsWith("Pin coordinates:") ? "Selected map pin" : "Detected address"}
+          </Text>
           <Text style={s.body}>{address}</Text>
+          {address.startsWith("Pin coordinates:") && (
+            <Text style={s.muted}>
+              Add a street or building address above before checkout.
+            </Text>
+          )}
+          {!address.startsWith("Pin coordinates:") && Platform.OS === "web" && (
+            <Text style={s.muted}>Address data © OpenStreetMap contributors</Text>
+          )}
         </View>
       )}
       <Button
